@@ -5,22 +5,125 @@ class = {}
 
 function class.player()
  local player = {
+  -- tweak me
+  r = 4,
+  accel = .02,
+  friction = 1.015,
+ 	maxspeed = 2.5,
+ 	slomospeed = .2,
+ 	chargespeed = 1/60,
+ 	launchspeed = 3,
+ 
+  -- don't tweak me
+  buttoncurrent = false,
+  buttonprevious = false,
  	x = 64,
  	y = 64,
- 	r = 4,
  	vx = 0,
  	vy = 0,
+ 	launching = false,
+ 	charge = 0,
  }
 
+ local inputx
+ local inputy
+
  function player:update()
+  -- input
+  inputx = 0
+  inputy = 0
+  if (btn(0)) inputx -= 1
+  if (btn(1)) inputx += 1
+  if (btn(2)) inputy -= 1
+  if (btn(3)) inputy += 1
+  local l = sqrt(inputx*inputx + inputy*inputy)
+  if l > 1 then
+   inputx /= l
+   inputy /= l
+  end
+  self.buttonprevious = self.buttoncurrent
+  self.buttoncurrent = btn(4)
+  local buttonpressed = self.buttoncurrent and not self.buttonprevious
+
+  local speed = sqrt(self.vx*self.vx + self.vy*self.vy)
+ 
+  -- acceleration
+  self.vx += inputx * self.accel * speed / self.maxspeed
+  self.vy += inputy * self.accel * speed / self.maxspeed
+  
+  -- friction
+  self.vx /= self.friction
+  self.vy /= self.friction
+
+  -- bounce of screen edges
+  if self.x < self.r then
+   self.x = self.r
+   self.vx *= -1
+  end
+  if self.x > 128 - self.r then
+   self.x = 128 - self.r
+   self.vx *= -1
+  end
+  if self.y < self.r then
+   self.y = self.r
+   self.vy *= -1
+  end
+  if self.y > 128 - self.r then
+   self.y = 128 - self.r
+   self.vy *= -1
+  end
+
+  -- limit speed
+  if speed > self.maxspeed then
+   self.vx /= (speed / self.maxspeed)
+   self.vy /= (speed / self.maxspeed)
+  end
+  
+  -- launching
+  if not self.launching and buttonpressed then
+   self.launching = true
+   self.charge = 0
+  end
+  if self.launching then
+   self.charge += self.chargespeed
+  end  
+  if self.launching and (not btn(4) or self.charge >= 1) then
+   self.launching = false
+   local angle
+   if btn(0) or btn(1) or btn(2) or btn(3) then
+    angle = atan2(inputx, inputy)
+   else
+    angle = atan2(self.vx, self.vy)
+   end
+   self.vx += self.launchspeed * cos(angle) * self.charge
+   self.vy += self.launchspeed * sin(angle) * self.charge
+  end
+ 
+  -- apply movement
+ 	local speedfactor
+ 	if self.launching then
+ 	 speedfactor = self.slomospeed
+ 	else
+ 	 speedfactor = 1
+ 	end
+  self.x += self.vx * speedfactor
+  self.y += self.vy * speedfactor
  end
  
  function player:draw()
+  local x, y = flr(self.x), flr(self.y)
+  if self.launching then
+   circfill(self.x, self.y, self.r * 4, 12)
+   circfill(self.x, self.y, self.r + self.r*3*self.charge, 14)
+   line(self.x, self.y, self.x + inputx*self.r*4, self.y + inputy*self.r*4, 9)
+  end
   circfill(self.x, self.y, self.r, 7)
  end
  
  return player
 end
+
+
 
 player = class.player()
 
