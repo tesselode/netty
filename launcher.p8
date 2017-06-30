@@ -151,15 +151,57 @@ end
 
 
 
+function class.dot(x, y)
+ local dot = {
+  r = 4,
+  
+  x = x,
+  y = y,
+  vx = 0,
+  vy = 0,
+ }
+ 
+ function dot:update()
+ end
+ 
+ function dot:draw()
+  local x, y = flr(self.x), flr(self.y)
+  circfill(x, y, self.r, 10)
+ end
+ 
+ return dot
+end
+
+
 player = class.player()
+dots = {}
+for i = 1, 3 do
+	add(dots, class.dot(flr(rnd(128)), flr(rnd(128))))
+end
 
 function _update60()
+ -- update player
  player:update()
+ 
+ -- update dots
+ for d in all(dots) do
+  d:update()
+  
+  -- dot collection
+  local distance = sqrt((d.x - player.x)^2 + (d.y - player.y)^2)
+  if distance < player.r + d.r then
+   del(dots, d)
+   add(dots, class.dot(flr(rnd(128)), flr(rnd(128))))
+  end
+ end
 end
 
 function _draw()
  cls(1)
  player:draw()
+ for d in all(dots) do
+  d:draw()
+ end
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
