@@ -13,6 +13,7 @@ function class.player()
  	slomospeed = .2,
  	chargespeed = 1/60,
  	launchspeed = 3,
+ 	traillength = 16,
  
   -- don't tweak me
   buttoncurrent = false,
@@ -24,6 +25,13 @@ function class.player()
  	launching = false,
  	charge = 0,
  }
+
+ -- init trail
+ player.trail = {}
+ local i
+ for i = 1, player.traillength do
+  player.trail[i] = {x = player.x, y = player.y}
+ end
 
  local inputx
  local inputy
@@ -108,16 +116,34 @@ function class.player()
  	end
   self.x += self.vx * speedfactor
   self.y += self.vy * speedfactor
+  
+  -- trail
+  self.trail[1].x = player.x
+  self.trail[1].y = player.y
+  for i = 2, #self.trail do
+   local t1 = self.trail[i]
+   local t2 = self.trail[i - 1]
+   t1.x = (t1.x + t2.x) / 2
+   t1.y = (t1.y + t2.y) / 2
+  end
  end
  
  function player:draw()
+  -- draw launching hud
   local x, y = flr(self.x), flr(self.y)
   if self.launching then
    circfill(self.x, self.y, self.r * 4, 12)
    circfill(self.x, self.y, self.r + self.r*3*self.charge, 14)
    line(self.x, self.y, self.x + inputx*self.r*4, self.y + inputy*self.r*4, 9)
+   circfill(self.x, self.y, self.r, 7)
   end
-  circfill(self.x, self.y, self.r, 7)
+  
+  -- draw trail
+  for i = 1, #self.trail do
+   local t = self.trail[i]
+   local r = self.r - self.r * (i / #self.trail)
+   circfill(t.x, t.y, r, 7)
+  end
  end
  
  return player
@@ -132,7 +158,7 @@ function _update60()
 end
 
 function _draw()
- cls()
+ cls(1)
  player:draw()
 end
 __gfx__
