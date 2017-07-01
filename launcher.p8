@@ -4,7 +4,7 @@ __lua__
 -- globals
 local player
 local dots
-local particles
+local effects
 
 
 
@@ -21,7 +21,7 @@ function class.player()
  	chargespeed = 1/60,
  	launchspeed = 3,
  	traillength = 16,
- 
+
   -- don't tweak me
   buttoncurrent = false,
   buttonprevious = false,
@@ -61,11 +61,11 @@ function class.player()
   local buttonpressed = self.buttoncurrent and not self.buttonprevious
 
   local speed = sqrt(self.vx*self.vx + self.vy*self.vy)
- 
+
   -- acceleration
   self.vx -= inputx * self.accel * speed / self.maxspeed
   self.vy -= inputy * self.accel * speed / self.maxspeed
-  
+
   -- friction
   self.vx /= self.friction
   self.vy /= self.friction
@@ -75,7 +75,7 @@ function class.player()
    for i = 1, 3 do
     local p = class.particle(self.x, self.y)
     p.angle = angle - .25 + rnd(.5)
-    add(particles, p)
+    add(effects, p)
    end
   end
   if self.x < self.r then
@@ -104,7 +104,7 @@ function class.player()
    self.vx /= (speed / self.maxspeed)
    self.vy /= (speed / self.maxspeed)
   end
-  
+
   -- launching
   if not self.launching and buttonpressed then
    self.launching = true
@@ -112,7 +112,7 @@ function class.player()
   end
   if self.launching then
    self.charge += self.chargespeed
-  end  
+  end
   if self.launching and (not btn(4) or self.charge >= 1) then
    self.launching = false
    local angle
@@ -126,10 +126,10 @@ function class.player()
    for i = 1, 5 do
     local p = class.particle(self.x, self.y, 12)
     p.angle = angle + .5 - .15 + rnd(.3)
-    add(particles, p)
+    add(effects, p)
    end
   end
- 
+
   -- apply movement
  	local speedfactor
  	if self.launching then
@@ -139,7 +139,7 @@ function class.player()
  	end
   self.x += self.vx * speedfactor
   self.y += self.vy * speedfactor
-  
+
   -- trail
   self.trail[1].x = player.x
   self.trail[1].y = player.y
@@ -150,7 +150,7 @@ function class.player()
    t1.y = (t1.y + t2.y) / 2
   end
  end
- 
+
  function player:draw()
   -- draw launching hud
   local x, y = flr(self.x), flr(self.y)
@@ -160,7 +160,7 @@ function class.player()
    line(self.x, self.y, self.x + inputx*self.r*4, self.y + inputy*self.r*4, 9)
    circfill(self.x, self.y, self.r, 7)
   end
-  
+
   -- draw trail
   for i = 1, #self.trail do
    local t = self.trail[i]
@@ -168,7 +168,7 @@ function class.player()
    circfill(t.x, t.y, r, 7)
   end
  end
- 
+
  return player
 end
 
@@ -177,22 +177,21 @@ end
 function class.dot(x, y)
  local dot = {
   r = 4,
-  
+
   x = x,
   y = y,
   vx = 0,
   vy = 0,
  }
- 
+
  function dot:update()
  end
- 
+
  function dot:draw()
   local x, y = flr(self.x), flr(self.y)
-  --circfill(x, y, self.r, 10)
   spr(1, x - 4, y - 4)
  end
- 
+
  return dot
 end
 
@@ -208,19 +207,19 @@ function class.particle(x, y, col)
   col = col or 7,
   life = .25 + rnd(.25),
  }
- 
+
  function particle:update()
   self.speed /= self.friction
   self.x += self.speed * cos(self.angle)
   self.y += self.speed * sin(self.angle)
   self.life -= 1/60
  end
- 
+
  function particle:draw()
   --circfill(self.x, self.y, 1, self.col)
   rect(self.x, self.y, self.x + 1, self.y + 1, self.col)
  end
- 
+
  return particle
 end
 
@@ -228,7 +227,7 @@ end
 -- init gameplay
 player = class.player()
 dots = {}
-particles = {}
+effects = {}
 for i = 1, 3 do
 	add(dots, class.dot(flr(rnd(128)), flr(rnd(128))))
 end
@@ -236,27 +235,27 @@ end
 function _update60()
  -- update player
  player:update()
- 
+
  -- update dots
  for d in all(dots) do
   d:update()
-  
+
   -- dot collection
   local distance = sqrt((d.x - player.x)^2 + (d.y - player.y)^2)
   if distance < player.r + d.r then
    del(dots, d)
    add(dots, class.dot(flr(rnd(128)), flr(rnd(128))))
    for i = 1, 5 do
-    add(particles, class.particle(d.x, d.y, 10))
+    add(effects, class.particle(d.x, d.y, 10))
    end
   end
  end
- 
+
  -- update particles
- for p in all(particles) do
-  p:update()
-  if p.life <= 0 then
-   del(particles, p)
+ for e in all(effects) do
+  e:update()
+  if e.life <= 0 then
+   del(effects, e)
   end
  end
 end
@@ -267,8 +266,8 @@ function _draw()
  for d in all(dots) do
   d:draw()
  end
- for p in all(particles) do
-  p:draw()
+ for e in all(effects) do
+  e:draw()
  end
 end
 __gfx__
