@@ -99,7 +99,7 @@ function class.player()
    self.launching = false
    local angle
    if btn(0) or btn(1) or btn(2) or btn(3) then
-    angle = atan2(inputx, inputy)
+    angle = atan2(inputx, inputy) + .5
    else
     angle = atan2(self.vx, self.vy)
    end
