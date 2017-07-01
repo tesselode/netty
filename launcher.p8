@@ -1,13 +1,20 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
+-- globals
+local player
+local dots
+local particles
+
+
+
 class = {}
 
 function class.player()
  local player = {
   -- tweak me
   r = 4,
-  accel = .02,
+  accel = .04,
   friction = 1.015,
  	maxspeed = 2.5,
  	slomospeed = .2,
@@ -56,29 +63,40 @@ function class.player()
   local speed = sqrt(self.vx*self.vx + self.vy*self.vy)
  
   -- acceleration
-  self.vx += inputx * self.accel * speed / self.maxspeed
-  self.vy += inputy * self.accel * speed / self.maxspeed
+  self.vx -= inputx * self.accel * speed / self.maxspeed
+  self.vy -= inputy * self.accel * speed / self.maxspeed
   
   -- friction
   self.vx /= self.friction
   self.vy /= self.friction
 
   -- bounce of screen edges
+  local burstbounceparticles = function(angle)
+   for i = 1, 3 do
+    local p = class.particle(self.x, self.y)
+    p.angle = angle - .25 + rnd(.5)
+    add(particles, p)
+   end
+  end
   if self.x < self.r then
    self.x = self.r
    self.vx *= -1
+   burstbounceparticles(0)
   end
   if self.x > 128 - self.r then
    self.x = 128 - self.r
    self.vx *= -1
+   burstbounceparticles(.5)
   end
   if self.y < self.r then
    self.y = self.r
    self.vy *= -1
+   burstbounceparticles(.75)
   end
   if self.y > 128 - self.r then
    self.y = 128 - self.r
    self.vy *= -1
+   burstbounceparticles(.25)
   end
 
   -- limit speed
@@ -173,8 +191,38 @@ function class.dot(x, y)
 end
 
 
+
+function class.particle(x, y, col)
+ local particle = {
+  x = x,
+  y = y,
+  angle = rnd(1),
+  speed = 3,
+  friction = 1.1,
+  col = col or 7,
+  life = .25 + rnd(.25),
+ }
+ 
+ function particle:update()
+  self.speed /= self.friction
+  self.x += self.speed * cos(self.angle)
+  self.y += self.speed * sin(self.angle)
+  self.life -= 1/60
+ end
+ 
+ function particle:draw()
+  --circfill(self.x, self.y, 1, self.col)
+  rect(self.x, self.y, self.x + 1, self.y + 1, self.col)
+ end
+ 
+ return particle
+end
+
+
+-- init gameplay
 player = class.player()
 dots = {}
+particles = {}
 for i = 1, 3 do
 	add(dots, class.dot(flr(rnd(128)), flr(rnd(128))))
 end
@@ -192,6 +240,17 @@ function _update60()
   if distance < player.r + d.r then
    del(dots, d)
    add(dots, class.dot(flr(rnd(128)), flr(rnd(128))))
+   for i = 1, 5 do
+    add(particles, class.particle(d.x, d.y, 10))
+   end
+  end
+ end
+ 
+ -- update particles
+ for p in all(particles) do
+  p:update()
+  if p.life <= 0 then
+   del(particles, p)
   end
  end
 end
@@ -201,6 +260,9 @@ function _draw()
  player:draw()
  for d in all(dots) do
   d:draw()
+ end
+ for p in all(particles) do
+  p:draw()
  end
 end
 __gfx__
