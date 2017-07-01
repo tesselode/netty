@@ -333,7 +333,10 @@ function _draw()
   e:draw()
  end
  
- local s = score.score .. '00'
+ local s = score.score
+ if s ~= 0 then
+  s = s .. '00'
+ end
  print(s, 2, 2, 5)
  print(s, 1, 1, 7)
 end
