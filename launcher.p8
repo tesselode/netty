@@ -7,6 +7,16 @@ function printc(s, x, y, c)
  print(s, x, y, c)
 end
 
+function sign(x)
+ if x < 0 then
+  return -1
+ elseif x > 0 then
+  return 1
+ else
+  return 0
+ end
+end
+
 
 
 -- globals
@@ -204,17 +214,40 @@ function class.dot(special)
  }
 
  function dot:update()
+  -- suction
+  self.vx -= (player.x - self.x) / 100000
+  self.vy -= (player.y - self.y) / 100000
+  
+  -- bounce off walls
+  if self.x < self.r then
+   self.x = self.r
+   self.vx *= -1
+  end
+  if self.x > 128 - self.r then
+   self.x = 128 - self.r
+   self.vx *= -1
+  end
+  if self.y < self.r + 16 then
+   self.y = self.r + 16
+   self.vy *= -1
+  end
+  if self.y > 128 - self.r then
+   self.y = 128 - self.r
+   self.vy *= -1
+  end
+  
+  self.x += self.vx
+  self.y += self.vy
  end
 
  function dot:draw()
-  local x, y = flr(self.x), flr(self.y)
   local s
   if special then
    s = 2
   else
    s = 1
   end
-  spr(s, x - 4, y - 4)
+  spr(s, self.x - 4, self.y - 4)
  end
 
  return dot
