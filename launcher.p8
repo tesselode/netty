@@ -64,6 +64,7 @@ local dots
 local blackholes
 local effects
 local score
+local gravitytimer
 freezeframes = 0
 uptime = 0
 
@@ -131,6 +132,18 @@ function class.player()
   -- friction
   self.vx /= self.friction
   self.vy /= self.friction
+  
+  -- gravity
+  if gravitytimer > 0 then
+   self.vy += .02
+  end
+  
+  -- black hole gravity
+  for b in all(blackholes) do
+	  local d = atan2(b.x - self.x, b.y - self.y)
+	  self.vx += .004 * cos(d)
+	  self.vy += .004 * sin(d)
+	 end
 
   -- bounce of screen edges
   local burstbounceparticles = function(angle)   
@@ -275,6 +288,11 @@ function class.dot(special)
 	  self.vx += .004 * cos(d)
 	  self.vy += .004 * sin(d)
 	 end
+  
+  -- gravity
+  if gravitytimer > 0 then
+   self.vy += .02
+  end
   
   -- black hole gravity
   for b in all(blackholes) do
@@ -452,6 +470,7 @@ function state.gameplay:enter()
 	 sequence = {{0, 0}},
 	 frame = 1,
 	}
+	gravitytimer = 0
 	self.powerups = {}
 	
 	for i = 1, 3 do
@@ -462,15 +481,17 @@ end
 function state.gameplay:powerup()
  -- shuffle powerups
  if #self.powerups == 0 then
-	 self.powerups = {1, 2, 3}
-	 for i = 1, #self.powerups - 1 do
-   local j = i + 1
-   if rnd(2) < 1 then
-    local a, b = self.powerups[i], self.powerups[j]
-    self.powerups[i] = b
-    self.powerups[j] = a
-   end
-  end
+	 self.powerups = {1, 2, 3, 4}
+	 for _ = 1, 10 do
+		 for i = 1, #self.powerups - 1 do
+	   local j = i + 1
+	   if rnd(2) < 1 then
+	    local a, b = self.powerups[i], self.powerups[j]
+	    self.powerups[i] = b
+	    self.powerups[j] = a
+	   end
+	  end
+	 end
  end
  		
  local c = self.powerups[1]
@@ -491,6 +512,11 @@ function state.gameplay:powerup()
   add(effects, class.poweruptext('magnet!'))
   sfx(21, 3)
  end
+ if c == 4 then
+  gravitytimer = 4
+  sfx(23, 3)
+  add(effects, class.poweruptext('gravity!'))
+ end
 end
 
 function state.gameplay:update()
@@ -502,6 +528,10 @@ function state.gameplay:update()
  score.timeleft -= 1/60
  if score.timeleft <= 0 then
   gotostate(state.results)
+ end
+ 
+ if gravitytimer > 0 then
+  gravitytimer -= 1/60
  end
 
  -- update player
@@ -610,10 +640,11 @@ function state.gameplay:draw()
  printc(t, 122, 10, 5)
  printc(t, 121, 9, 7)
  
- local a = self.powerups[1] or ' '
- local b = self.powerups[2] or ' '
- local c = self.powerups[3] or ' '
- print(a..' '..b..' '..c, 64, 0, 7)
+ -- powerup debug info
+ --local a = self.powerups[1] or ' '
+ --local b = self.powerups[2] or ' '
+ --local c = self.powerups[3] or ' '
+ --print(a..' '..b..' '..c, 64, 0, 7)
 end
 
 
@@ -622,6 +653,11 @@ end
 state.results = {}
 
 function state.results:enter()
+ sfx(-1, 0)
+ sfx(-1, 1)
+ sfx(-1, 2)
+ sfx(-1, 3)
+
  self.newhighscore = false
  if score.score > score.highscore then
   self.newhighscore = true
@@ -987,7 +1023,7 @@ __sfx__
 0003002005050227500505028750060502d750060503375007050367500705038750080503875008050367500705032750070502d75006050267500605020750050501975005050147500405018750040501c750
 00020000030500605007050080500a0500a0500b0500c0500e0501005011050130501405016050180501a0501c0501e05020050220502405026050290502b0502e050300503205034050370503a0503c0503f050
 000300000a0500c0500c0500905007050050500405004050050500605007050070500605004050020500205001050010500105000050000500005002000010000100001000010000200002000020000100001000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000200002415024150241502415024150241501f1501f1501f1501f1501f1501f1501a1501a1501a1501a1501a1501a1501515015150151501515015150151501515015150151501515015150151501515015150
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
