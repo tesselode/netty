@@ -1,6 +1,16 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
+-- state management
+state = {}
+
+function gotostate(s)
+ state.current = s
+ state.current:enter()
+end
+
+
+
 -- camera shakes
 shake = {}
 shake.launch = {
@@ -22,6 +32,7 @@ shake.launch = {
 
 -- extra functions
 function printc(s, x, y, c)
+ s = s .. ''
  x -= #s * 2
  print(s, x, y, c)
 end
@@ -342,28 +353,39 @@ end
 
 
 
--- init gameplay
-player = class.player()
-dots = {}
-effects = {}
-score = {
- score = 0,
- multiplier = 1,
- dotscollected = 0,
-}
-cam = {
- sequence = {{0, 0}},
- frame = 1,
-}
+-- gameplay state --
 
-for i = 1, 3 do
-	add(dots, class.dot())
+state.gameplay = {}
+
+function state.gameplay:enter()
+	player = class.player()
+	dots = {}
+	effects = {}
+	score = {
+	 score = 0,
+	 multiplier = 1,
+	 dotscollected = 0,
+	 timeleft = 5,
+	}
+	cam = {
+	 sequence = {{0, 0}},
+	 frame = 1,
+	}
+	
+	for i = 1, 3 do
+		add(dots, class.dot())
+	end 
 end
 
-function _update60()
+function state.gameplay:update()
  if freezeframes > 0 then
   freezeframes -= 1
   return
+ end
+
+ score.timeleft -= 1/60
+ if score.timeleft <= 0 then
+  gotostate(state.results)
  end
 
  -- update player
@@ -421,7 +443,7 @@ function _update60()
  end
 end
 
-function _draw()
+function state.gameplay:draw()
  cls()
  
  -- draw map
@@ -449,8 +471,53 @@ function _draw()
  print('high', 1, 9, 10)
  print('time', 114, 2, 5)
  print('time', 113, 1, 7)
- printc('60', 122, 10, 5)
- printc('60', 121, 9, 7)
+ local t = flr(score.timeleft) + 1
+ t = t .. ''
+ printc(t, 122, 10, 5)
+ printc(t, 121, 9, 7)
+end
+
+
+
+-- results screen
+state.results = {}
+
+function state.results:enter()
+end
+
+function state.results:update()
+ if btnp(5) then
+  gotostate(state.gameplay)
+ end
+end
+
+function state.results:draw()
+ rectfill(8, 32, 120, 96, 0)
+ printc('final score', 65, 41, 5)
+ printc('final score', 64, 40, 12)
+ local s = score.score
+ if s > 0 then
+  s = s .. '00'
+ end
+ printc(s, 65, 49, 5)
+ printc(s, 64, 48, 7)
+ printc('press x to restart', 65, 81, 5)
+ printc('press x to restart', 64, 80, 12)
+end
+
+
+
+-- main loop --
+function _init()
+	gotostate(state.gameplay)
+end
+
+function _update60()
+ state.current:update()
+end
+
+function _draw()
+ state.current:draw()
 end
 __gfx__
 00000000000aa000000bb00000055000000550000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
