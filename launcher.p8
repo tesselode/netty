@@ -1,6 +1,10 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
+cartdata("tesselode_launcher")
+
+
+
 -- state management
 state = {}
 
@@ -363,9 +367,10 @@ function state.gameplay:enter()
 	effects = {}
 	score = {
 	 score = 0,
+	 highscore = dget(0),
 	 multiplier = 1,
 	 dotscollected = 0,
-	 timeleft = 5,
+	 timeleft = 60,
 	}
 	cam = {
 	 sequence = {{0, 0}},
@@ -404,6 +409,7 @@ function state.gameplay:update()
    if d.special then
     col = 11
     dotscore *= 5
+    add(dots, class.dot())
    else
     col = 10
    end
@@ -467,8 +473,14 @@ function state.gameplay:draw()
  print('score', 1, 1, 12)
  print(s, 26, 2, 5)
  print(s, 25, 1, 7)
+ local s = score.highscore
+ if s ~= 0 then
+  s = s .. '00'
+ end
  print('high', 2, 10, 5)
  print('high', 1, 9, 10)
+ print(s, 26, 10, 5)
+ print(s, 25, 9, 7)
  print('time', 114, 2, 5)
  print('time', 113, 1, 7)
  local t = flr(score.timeleft) + 1
@@ -483,6 +495,11 @@ end
 state.results = {}
 
 function state.results:enter()
+ self.newhighscore = false
+ if score.score > score.highscore then
+  self.newhighscore = true
+  dset(0, score.score)
+ end
 end
 
 function state.results:update()
@@ -501,6 +518,10 @@ function state.results:draw()
  end
  printc(s, 65, 49, 5)
  printc(s, 64, 48, 7)
+ if self.newhighscore then
+  printc('new high score!', 65, 65, 5)
+  printc('new high score!', 64, 64, 10)
+ end
  printc('press x to restart', 65, 81, 5)
  printc('press x to restart', 64, 80, 12)
 end
