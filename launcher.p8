@@ -61,9 +61,11 @@ end
 -- globals
 local player
 local dots
+local blackholes
 local effects
 local score
 freezeframes = 0
+uptime = 0
 
 
 
@@ -90,6 +92,7 @@ function class.player()
  	vy = 0,
  	launching = false,
  	charge = 0,
+ 	suctiontimer = 0,
  }
 
  -- init trail
@@ -213,6 +216,11 @@ function class.player()
   self.x += self.vx * speedfactor
   self.y += self.vy * speedfactor
 
+  -- powerup states
+  if self.suctiontimer > 0 then
+   self.suctiontimer -= 1/60
+  end
+
   -- trail
   self.trail[1].x = player.x
   self.trail[1].y = player.y
@@ -262,8 +270,18 @@ function class.dot(special)
 
  function dot:update()
   -- suction
-  --self.vx -= (player.x - self.x) / 100000
-  --self.vy -= (player.y - self.y) / 100000
+  if player.suctiontimer > 0 then
+	  local d = atan2(player.x - self.x, player.y - self.y)
+	  self.vx += .004 * cos(d)
+	  self.vy += .004 * sin(d)
+	 end
+  
+  -- black hole gravity
+  for b in all(blackholes) do
+	  local d = atan2(b.x - self.x, b.y - self.y)
+	  self.vx += .004 * cos(d)
+	  self.vy += .004 * sin(d)
+	 end
   
   -- bounce off walls
   if self.x < self.r then
@@ -299,6 +317,34 @@ function class.dot(special)
  end
 
  return dot
+end
+
+
+function class.blackhole()
+ local blackhole = {
+  x = 8 + flr(rnd(112)),
+  y = 24 + flr(rnd(96)),
+	 r = 8,
+	 life = 5,
+	}
+	
+	function blackhole:update()
+	 self.life -= 1/60
+	end
+
+	function blackhole:draw()
+	 local x1, y1 = self.x, self.y
+	 for i = 0, 1, .05 do
+	  local r = self.r + 2 + 2 * sin(uptime / 30 + i * 3)
+	  local x2 = self.x + r * cos(i)
+	  local y2 = self.y + r * sin(i)
+	  line(x1, y1, x2, y2, 8)
+	 end
+	 circfill(self.x, self.y, self.r, 0)
+	 circ(self.x, self.y, self.r, 8)
+	end
+	
+	return blackhole
 end
 
 
@@ -356,6 +402,28 @@ function class.scorepopup(x, y, score, col)
 end
 
 
+function class.poweruptext(s)
+ local text = {
+  s = s,
+  
+  y = 32,
+  life = 2,
+ }
+ 
+ function text:update()
+  self.y /= 1.1
+  self.life -= 1/60
+ end
+ 
+ function text:draw()
+  printc(self.s, 65, 33 + self.y, 5)
+  printc(self.s, 64, 32 + self.y, 11)
+ end
+ 
+ return text
+end
+
+
 
 -- gameplay state --
 
@@ -364,6 +432,7 @@ state.gameplay = {}
 function state.gameplay:enter()
 	player = class.player()
 	dots = {}
+	blackholes = {}
 	effects = {}
 	score = {
 	 score = 0,
@@ -379,7 +448,23 @@ function state.gameplay:enter()
 	
 	for i = 1, 3 do
 		add(dots, class.dot())
-	end 
+	end
+end
+
+function state.gameplay:powerup()
+ local c = flr(rnd(3))
+ if c == 0 then
+  add(dots, class.dot())
+  add(effects, class.poweruptext('extra dot!'))
+ end
+ if c == 1 then
+  add(blackholes, class.blackhole())
+  add(effects, class.poweruptext('black hole!'))
+ end
+ if c == 2 then
+  player.suctiontimer = 5
+  add(effects, class.poweruptext('magnet!'))
+ end
 end
 
 function state.gameplay:update()
@@ -409,7 +494,7 @@ function state.gameplay:update()
    if d.special then
     col = 11
     dotscore *= 5
-    add(dots, class.dot())
+    self:powerup()
    else
     col = 10
    end
@@ -431,6 +516,14 @@ function state.gameplay:update()
 	   s += 11
 	  end
 	  sfx(s, 0)
+  end
+ end
+ 
+ -- update blackholes
+ for b in all(blackholes) do
+  b:update()
+  if b.life <= 0 then
+   del(blackholes, b)
   end
  end
 
@@ -455,6 +548,9 @@ function state.gameplay:draw()
  -- draw map
  camera(cam.sequence[cam.frame][1], cam.sequence[cam.frame][2])
  map(0, 0, 0, 0, 16, 16)
+ for b in all(blackholes) do
+  b:draw()
+ end
  player:draw()
  for d in all(dots) do
   d:draw()
@@ -534,6 +630,7 @@ function _init()
 end
 
 function _update60()
+ uptime += 1
  state.current:update()
 end
 
