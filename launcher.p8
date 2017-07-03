@@ -448,10 +448,11 @@ function state.gameplay:enter()
 	 dotscollected = 0,
 	 timeleft = 60,
 	}
-			cam = {
+	cam = {
 	 sequence = {{0, 0}},
 	 frame = 1,
 	}
+	self.powerups = {}
 	
 	for i = 1, 3 do
 		add(dots, class.dot())
@@ -459,17 +460,33 @@ function state.gameplay:enter()
 end
 
 function state.gameplay:powerup()
- local c = flr(rnd(3))
- if c == 0 then
+ -- shuffle powerups
+ if #self.powerups == 0 then
+	 self.powerups = {1, 2, 3}
+	 for i = 1, #self.powerups - 1 do
+   local j = i + 1
+   if rnd(2) < 1 then
+    local a, b = self.powerups[i], self.powerups[j]
+    self.powerups[i] = b
+    self.powerups[j] = a
+   end
+  end
+ end
+ 		
+ local c = self.powerups[1]
+ assert(c)
+ del(self.powerups, self.powerups[1])
+
+ if c == 1 then
   add(dots, class.dot())
   add(effects, class.poweruptext('extra dot!'))
   sfx(19, 3)
  end
- if c == 1 then
+ if c == 2 then
   add(blackholes, class.blackhole())
   add(effects, class.poweruptext('black hole!'))
  end
- if c == 2 then
+ if c == 3 then
   player.suctiontimer = 5
   add(effects, class.poweruptext('magnet!'))
   sfx(21, 3)
@@ -592,6 +609,11 @@ function state.gameplay:draw()
  t = t .. ''
  printc(t, 122, 10, 5)
  printc(t, 121, 9, 7)
+ 
+ local a = self.powerups[1] or ' '
+ local b = self.powerups[2] or ' '
+ local c = self.powerups[3] or ' '
+ print(a..' '..b..' '..c, 64, 0, 7)
 end
 
 
