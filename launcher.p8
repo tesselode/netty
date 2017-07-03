@@ -331,6 +331,9 @@ function class.blackhole()
 	
 	function blackhole:update()
 	 self.life -= 1/60
+	 if self.life <= 20/60 then
+	  self.r -= 8/20
+	 end
 	 if self.life <= 0 then
 	  sfx(22, 3)
 	 end
