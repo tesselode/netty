@@ -735,7 +735,7 @@ function state.gameplay:draw()
  camera(cam.sequence[cam.frame][1], cam.sequence[cam.frame][2])
  
  -- draw grid
- clip(0, 16, 128, 112)
+ clip(2, 18, 126, 110)
  rectfill(0, 0, 128, 128, 1)
 	for x = 0, 128, 16 do
 	 for y = 16, 112, 16 do
