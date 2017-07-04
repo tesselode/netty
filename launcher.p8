@@ -94,7 +94,10 @@ function class.player()
  	launching = false,
  	charge = 0,
  	suctiontimer = 0,
+ 	sizetimer = 0,
+ 	speedtimer = 0,
  }
+ player.displayr = player.r
 
  -- init trail
  player.trail = {}
@@ -219,6 +222,20 @@ function class.player()
    sfx(9, 1)
   end
 
+  -- powerup states
+  if self.suctiontimer > 0 then
+   self.suctiontimer -= 1/60
+  end
+  if self.sizetimer > 0 then
+   self.r = 8
+   self.sizetimer -= 1/60
+  else
+   self.r = 4
+  end
+  if self.speedtimer > 0 then
+   self.speedtimer -= 1/60
+  end
+
   -- apply movement
  	local speedfactor
  	if self.launching then
@@ -226,13 +243,11 @@ function class.player()
  	else
  	 speedfactor = 1
  	end
+ 	if self.speedtimer > 0 then
+ 	 speedfactor *= 1.5
+ 	end
   self.x += self.vx * speedfactor
   self.y += self.vy * speedfactor
-
-  -- powerup states
-  if self.suctiontimer > 0 then
-   self.suctiontimer -= 1/60
-  end
 
   -- trail
   self.trail[1].x = player.x
@@ -243,30 +258,39 @@ function class.player()
    t1.x = (t1.x + t2.x) / 2
    t1.y = (t1.y + t2.y) / 2
   end
+  
+  -- cosmetic
+  self.displayr = self.displayr + (self.r - self.displayr) * .1
  end
 
  function player:draw()
   -- draw launching hud
   local x, y = flr(self.x), flr(self.y)
   if self.launching then
-   circfill(self.x, self.y, self.r * 4, 12)
-   circfill(self.x, self.y, self.r + self.r*3*self.charge, 14)
-   line(self.x, self.y, self.x + inputx*self.r*4, self.y + inputy*self.r*4, 9)
-   circfill(self.x, self.y, self.r, 7)
+   circfill(self.x, self.y, self.displayr * 4, 12)
+   circfill(self.x, self.y, self.displayr + self.displayr*3*self.charge, 14)
+   line(self.x, self.y, self.x + inputx*self.displayr*4, self.y + inputy*self.r*4, 9)
   end
 
   -- draw trail
   for i = 1, #self.trail do
    local t = self.trail[i]
-   local r = self.r - self.r * (i / #self.trail)
-   circfill(t.x, t.y, r, 7)
+   local r = self.displayr - self.displayr * (i / #self.trail)
+   local c
+   if self.speedtimer > 0 then
+    c = 9
+   else
+    c = 7
+   end
+   circfill(t.x, t.y, r, c)
   end
   
   if self.suctiontimer > 0 then
-   circfill(x, y, self.r, 11)
-   circ(x, y, self.r, 10)
+   circfill(x, y, self.displayr, 11)
+   circ(x, y, self.displayr, 10)
   else
-	  circ(x, y, self.r, 6)
+   circfill(x, y, self.displayr, 7)
+	  circ(x, y, self.displayr, 6)
 	 end
  end
 
@@ -499,7 +523,7 @@ function state.gameplay:enter()
 	gravitytimer = 0
 	self.powerups = {}
 	
-	for i = 1, 3 do
+	for i = 1, 5 do
 		add(dots, class.dot())
 	end
 end
@@ -507,7 +531,7 @@ end
 function state.gameplay:powerup()
  -- shuffle powerups
  if #self.powerups == 0 then
-	 self.powerups = {1, 2, 3, 4}
+	 self.powerups = {1, 2, 3, 4, 5}
 	 for _ = 1, 10 do
 		 for i = 1, #self.powerups - 1 do
 	   local j = i + 1
@@ -534,14 +558,19 @@ function state.gameplay:powerup()
   add(effects, class.poweruptext('black hole!'))
  end
  if c == 3 then
-  player.suctiontimer = 5
-  add(effects, class.poweruptext('magnet!'))
+  player.sizetimer = 5
+  add(effects, class.poweruptext('size up!'))
   sfx(21, 3)
  end
  if c == 4 then
   gravitytimer = 4
   sfx(23, 3)
   add(effects, class.poweruptext('gravity!'))
+ end
+ if c == 5 then
+  player.speedtimer = 6
+  add(effects, class.poweruptext('speed up!'))
+  sfx(21, 3)
  end
 end
 
