@@ -736,24 +736,25 @@ function state.gameplay:draw()
  
  -- draw grid
  clip(0, 16, 128, 112)
- for x = 0, 128, 16 do
-	 for y = 16, 128, 16 do
-	  local p = self.grid[x][y]
-	  circfill(p.x, p.y, 4, 1)
-	 end
-	end
+ rectfill(0, 0, 128, 128, 1)
 	for x = 0, 128, 16 do
 	 for y = 16, 112, 16 do
 	  local a = self.grid[x][y]
 	  local b = self.grid[x][y+16]
-	  line(a.x, a.y, b.x, b.y, 1)
+	  line(a.x, a.y, b.x, b.y, 0)
 	 end
 	end
 	for x = 0, 112, 16 do
 	 for y = 16, 128, 16 do
 	  local a = self.grid[x][y]
 	  local b = self.grid[x+16][y]
-	  line(a.x, a.y, b.x, b.y, 1)
+	  line(a.x, a.y, b.x, b.y, 0)
+	 end
+	end
+	for x = 0, 128, 16 do
+	 for y = 16, 128, 16 do
+	  local p = self.grid[x][y]
+	  --circfill(p.x, p.y, 1, 13)
 	 end
 	end
 	clip()
