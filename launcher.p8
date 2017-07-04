@@ -56,6 +56,16 @@ function sign(x)
  end
 end
 
+function lerp(a, b, f)
+ return a + (b-a) * f
+end
+
+function grav(ax, ay, bx, by, f)
+ local r = sqrt((bx-ax)^2 + (by-ay)^2)
+ local x = lerp(ax, bx, f/r^2)
+ local y = lerp(ay, by, f/r^2)
+ return x, y
+end
 
 
 -- globals
@@ -500,6 +510,57 @@ end
 
 
 
+function class.gridpoint(x, y)
+ local point = {
+  anchorx = x,
+  anchory = y,
+  x = x,
+  y = y,
+  vx = 0,
+  vy = 0,
+ }
+ 
+ function point:update()
+  if self.anchorx == 0 or self.anchorx == 128 or self.anchory == 16 or self.anchory == 128 then
+   return
+  end
+ 
+  for d in all(dots) do
+   local r = (d.x - self.x)^2 + (d.y - self.y)^2
+   if r < 1 then r = 1 end
+   self.x = lerp(self.x, d.x, .1/r)
+   self.y = lerp(self.y, d.y, .1/r)
+  end
+  
+  for b in all(blackholes) do
+	  local r = sqrt((b.x - self.x)^2 + (b.y - self.y)^2)
+	  if r < 1 then r = 1 end
+   self.x = lerp(self.x, b.x, 1/r)
+   self.y = lerp(self.y, b.y, 1/r)
+  end
+  
+  local r = (player.x - self.x)^2 + (player.y - self.y)^2
+  if r < 1 then r = 1 end
+  self.x = lerp(self.x, player.x, .1/r)
+  self.y = lerp(self.y, player.y, .1/r)
+  
+  if gravitytimer > 0 then
+   self.y = lerp(self.y, 128, .01)
+  end
+  
+  self.x = lerp(self.x, self.anchorx, .1)
+  self.y = lerp(self.y, self.anchory, .1)
+ end
+ 
+ function point:draw()
+  circfill(self.x, self.y, 2, 2)
+ end
+
+ return point
+end
+  
+
+
 -- gameplay state --
 
 state.gameplay = {}
@@ -522,6 +583,13 @@ function state.gameplay:enter()
 	}
 	gravitytimer = 0
 	self.powerups = {}
+	self.grid = {}
+	for x = 0, 128, 16 do
+	 self.grid[x] = {}
+	 for y = 16, 128, 16 do
+	  self.grid[x][y] = class.gridpoint(x, y)
+	 end
+	end
 	
 	for i = 1, 5 do
 		add(dots, class.dot())
@@ -646,6 +714,13 @@ function state.gameplay:update()
   end
  end
  
+ -- update grid
+ for x = 0, 128, 16 do
+	 for y = 16, 128, 16 do
+	  self.grid[x][y]:update()
+	 end
+	end
+ 
  -- update camera
  cam.frame += 1
  if cam.frame > #cam.sequence then
@@ -659,6 +734,31 @@ function state.gameplay:draw()
  -- draw map
  camera(cam.sequence[cam.frame][1], cam.sequence[cam.frame][2])
  map(0, 0, 0, 0, 16, 16)
+ 
+ -- draw grid
+ for x = 0, 128, 16 do
+	 for y = 16, 128, 16 do
+	  self.grid[x][y]:draw()
+	 end
+	end
+	
+	for x = 0, 128, 16 do
+	 for y = 16, 112, 16 do
+	  local a = self.grid[x][y]
+	  local b = self.grid[x][y+16]
+	  line(a.x, a.y, b.x, b.y)
+	 end
+	end
+	for x = 0, 112, 16 do
+	 for y = 16, 128, 16 do
+	  local a = self.grid[x][y]
+	  local b = self.grid[x+16][y]
+	  line(a.x, a.y, b.x, b.y)
+	 end
+	end
+
+	
+	-- draw entities
  for b in all(blackholes) do
   b:draw()
  end
