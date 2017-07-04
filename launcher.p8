@@ -284,6 +284,7 @@ function class.dot(special)
   vx = 0,
   vy = 0,
   special = special,
+  displayr = 1,
  }
 
  function dot:update()
@@ -328,19 +329,33 @@ function class.dot(special)
    sfx(24, 0)
   end
   
+  -- apply movement
   self.x += self.vx
   self.y += self.vy
+  
+  -- enter animation
+  if self.displayr < self.r then
+   self.displayr += 1/3
+  end
  end
 
  function dot:draw()
-  local s
-  if special then
-   s = 2
+  if self.displayr < self.r then
+   if self.special then
+    circfill(self.x, self.y, self.displayr, 11)
+   else
+    circfill(self.x, self.y, self.displayr, 10)
+   end
   else
-   s = 1
-  end
-  spr(s + 2, self.x - 3, self.y - 3)
-  spr(s, self.x - 4, self.y - 4)
+	  local s
+	  if self.special then
+	   s = 2
+	  else
+	   s = 1
+	  end
+	  spr(s + 2, self.x - 3, self.y - 3)
+	  spr(s, self.x - 4, self.y - 4)
+	 end
  end
 
  return dot
@@ -353,14 +368,16 @@ function class.blackhole()
   y = 24 + flr(rnd(96)),
 	 r = 8,
 	 life = 5,
+	 displayr = 0,
 	}
 	sfx(20, 3)
 	
 	function blackhole:update()
 	 self.life -= 1/60
 	 if self.life <= 20/60 then
-	  self.r -= 8/20
+	  self.r = 0
 	 end
+	 self.displayr = self.displayr + (self.r - self.displayr) * .1
 	 if self.life <= 0 then
 	  sfx(22, 3)
 	 end
@@ -369,13 +386,13 @@ function class.blackhole()
 	function blackhole:draw()
 	 local x1, y1 = self.x, self.y
 	 for i = 0, 1, .05 do
-	  local r = self.r + 2 + 2 * sin(uptime / 30 + i * 3)
+	  local r = self.displayr + 2 + 2 * sin(uptime / 30 + i * 3)
 	  local x2 = self.x + r * cos(i)
 	  local y2 = self.y + r * sin(i)
 	  line(x1, y1, x2, y2, 8)
 	 end
-	 circfill(self.x, self.y, self.r, 0)
-	 circ(self.x, self.y, self.r, 8)
+	 circfill(self.x, self.y, self.displayr, 0)
+	 circ(self.x, self.y, self.displayr, 8)
 	end
 	
 	return blackhole
@@ -440,8 +457,8 @@ function class.poweruptext(s)
  local text = {
   s = s,
   
-  y = 32,
-  life = 2,
+  y = 16,
+  life = 1.5,
  }
  
  function text:update()
@@ -450,8 +467,8 @@ function class.poweruptext(s)
  end
  
  function text:draw()
-  printc(self.s, 65, 33 + self.y, 5)
-  printc(self.s, 64, 32 + self.y, 11)
+  printc(self.s, 64, 65 + self.y, 5)
+  printc(self.s, 64, 64 + self.y, 11)
  end
  
  return text
