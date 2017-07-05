@@ -4,7 +4,8 @@
 - [ ] Music
 - [X] Juicy countdown timer (turns red and starts animating at 10 seconds)
 - [X] Juicy results screen
-- [ ] Intro screen (player entrance + timer countup)
+- [X] Intro screen
+- [ ] Timer countup during intro screen (?)
 - [ ] Title screen
 - [ ] Prevent overlapping powerup messages
 - [ ] Playtest!

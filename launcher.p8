@@ -830,7 +830,7 @@ function state.results:update()
 	end
 
  if self.statetimer <= 0 and btnp(5) then
-  gotostate(state.gameplay)
+  run()
  end
 end
 
@@ -863,9 +863,85 @@ end
 
 
 
+-- intro sequence
+state.intro = {}
+
+function state.intro:enter()
+ self.rings = {}
+ for i = 1, 8 do
+  self.rings[i] = {
+   startr = 16*i,
+   extrar = rnd(512),
+   targetr = i/4,
+  }
+  self.rings[i].r = self.rings[i].startr
+ end
+ 
+ self.timer = 2
+end
+
+function state.intro:update()
+ for i = 1, #self.rings do
+  local r = self.rings[i]
+  r.r -= r.startr/120
+  r.extrar = lerp(r.extrar, 0, .05)
+ end
+ 
+ self.timer -= 1/60
+ if self.timer <= 0 then
+  gotostate(state.gameplay)
+ end
+end
+
+function state.intro:draw()
+ cls()
+ 
+ clip(2, 18, 126, 110)
+ 
+ --rectfill(0, 0, 128, 128, 1)
+
+ -- draw grid
+ for x = 0, 128, 16 do
+  line(x, 16, x, 128, 1)
+ end
+ for y = 16, 128, 16 do
+  line(0, y, 128, y, 1)
+ end
+ 
+ -- draw rings
+ for i = 1, #self.rings do
+  local r = self.rings[i]
+  circ(64, 64, r.r + r.extrar + r.targetr, 7)
+ end
+ 
+ clip()
+ 
+ --map(0, 0, 0, 0, 16, 16)
+ 
+ -- draw hud
+ print('score', 2, 2, 5)
+ print('score', 1, 1, 12)
+ print(0, 26, 2, 5)
+ print(0, 25, 1, 7)
+ local s = dget(0)
+ if s ~= 0 then
+  s = s .. '00'
+ end
+ print('high', 2, 10, 5)
+ print('high', 1, 9, 10)
+ print(s, 26, 10, 5)
+ print(s, 25, 9, 7)
+ print('time', 114, 2, 5)
+ print('time', 113, 1, 7)
+ printc(60, 122, 10, 5)
+ printc(60, 121, 9, 7)
+end
+
+
+
 -- main loop --
 function _init()
-	gotostate(state.gameplay)
+	gotostate(state.intro)
 end
 
 function _update60()
