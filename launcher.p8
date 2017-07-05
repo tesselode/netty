@@ -957,9 +957,31 @@ end
 
 
 
+state.transition = {}
+
+function state.transition:enter()
+ self.r = 1
+end
+
+function state.transition:update()
+ self.r *= 1.15
+ if self.r > 10000 then
+  gotostate(state.intro)
+ end
+end
+
+function state.transition:draw()
+ --rectfill(0, 0, self.x, 128, 0)
+ circfill(64, 64, self.r, 0)
+ circfill(64, 64, self.r/2, 1)
+ circfill(64, 64, self.r/4, 0)
+end
+
+
+
 -- main loop --
 function _init()
-	gotostate(state.intro)
+	gotostate(state.transition)
 end
 
 function _update60()
