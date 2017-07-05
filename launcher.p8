@@ -367,6 +367,16 @@ function class.dot(special)
  end
 
  function dot:draw()
+  if self.special then
+   local x1, y1 = self.x, self.y
+	  for i = 0, 1, 1/16 do
+		  local r = self.displayr + 2 * sin(uptime / 30 + i * 4)
+		  local x2 = self.x + r * cos(i)
+		  local y2 = self.y + r * sin(i)
+		  line(x1, y1, x2, y2, 11)
+		 end
+		end
+ 
   if self.displayr < self.r then
    if self.special then
     circfill(self.x, self.y, self.displayr, 11)
