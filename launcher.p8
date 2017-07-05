@@ -60,13 +60,6 @@ function lerp(a, b, f)
  return a + (b-a) * f
 end
 
-function grav(ax, ay, bx, by, f)
- local r = sqrt((bx-ax)^2 + (by-ay)^2)
- local x = lerp(ax, bx, f/r^2)
- local y = lerp(ay, by, f/r^2)
- return x, y
-end
-
 
 -- globals
 local player
@@ -524,13 +517,6 @@ function class.gridpoint(x, y)
   if self.anchorx == 0 or self.anchorx == 128 or self.anchory == 16 or self.anchory == 128 then
    return
   end
- 
-  --for d in all(dots) do
-  -- local r = (d.x - self.x)^2 + (d.y - self.y)^2
-  -- if r < 1 then r = 1 end
-  -- self.x = lerp(self.x, d.x, .1/r)
-  -- self.y = lerp(self.y, d.y, .1/r)
-  --end
   
   for b in all(blackholes) do
 	  local r = sqrt((b.x - self.x)^2 + (b.y - self.y)^2)
@@ -551,10 +537,6 @@ function class.gridpoint(x, y)
   
   self.x = lerp(self.x, self.anchorx, .1)
   self.y = lerp(self.y, self.anchory, .1)
- end
- 
- function point:draw()
-  circfill(self.x, self.y, 2, 2)
  end
 
  return point
@@ -583,6 +565,7 @@ function state.gameplay:enter()
 	 frame = 1,
 	}
 	gravitytimer = 0
+	
 	self.powerups = {}
 	self.grid = {}
 	for x = 0, 128, 16 do
@@ -591,6 +574,8 @@ function state.gameplay:enter()
 	  self.grid[x][y] = class.gridpoint(x, y)
 	 end
 	end
+	self.timeyoffset = 0
+	self.secondtimer = 1
 	
 	for i = 1, 5 do
 		add(dots, class.dot())
@@ -727,6 +712,16 @@ function state.gameplay:update()
  if cam.frame > #cam.sequence then
   cam.frame = #cam.sequence
  end
+ 
+ -- update hud animations
+ self.timeyoffset = lerp(self.timeyoffset, 0, .2)
+ self.secondtimer -= 1/60
+ if self.secondtimer <= 0 then
+  self.secondtimer += 1
+  if score.timeleft < 10 then
+   self.timeyoffset = 4
+  end
+ end
 end
 
 function state.gameplay:draw()
@@ -749,12 +744,6 @@ function state.gameplay:draw()
 	  local a = self.grid[x][y]
 	  local b = self.grid[x+16][y]
 	  line(a.x, a.y, b.x, b.y, 0)
-	 end
-	end
-	for x = 0, 128, 16 do
-	 for y = 16, 128, 16 do
-	  local p = self.grid[x][y]
-	  --circfill(p.x, p.y, 1, 13)
 	 end
 	end
 	clip()
@@ -796,14 +785,12 @@ function state.gameplay:draw()
  print('time', 113, 1, 7)
  local t = flr(score.timeleft) + 1
  t = t .. ''
- printc(t, 122, 10, 5)
- printc(t, 121, 9, 7)
- 
- -- powerup debug info
- --local a = self.powerups[1] or ' '
- --local b = self.powerups[2] or ' '
- --local c = self.powerups[3] or ' '
- --print(a..' '..b..' '..c, 64, 0, 7)
+ printc(t, 122, 10 + self.timeyoffset, 5)
+ local c = 7
+ if score.timeleft < 10 then
+  c = 8
+ end
+ printc(t, 121, 9 + self.timeyoffset, c)
 end
 
 
