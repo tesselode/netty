@@ -7,5 +7,5 @@
 - [X] Intro screen
 - [ ] Timer countup during intro screen (?)
 - [ ] Title screen
-- [ ] Prevent overlapping powerup messages
+- [X] Prevent overlapping powerup messages
 - [ ] Playtest!

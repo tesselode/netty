@@ -486,6 +486,7 @@ function class.poweruptext(s)
   
   y = 16,
   life = 1.5,
+  id = 'text',
  }
  
  function text:update()
@@ -601,6 +602,13 @@ function state.gameplay:powerup()
  local c = self.powerups[1]
  assert(c)
  del(self.powerups, self.powerups[1])
+
+ -- delete previous powerup text
+ for e in all(effects) do
+  if e.id == 'text' then
+   del(effects, e)
+  end
+ end
 
  if c == 1 then
   add(dots, class.dot())
