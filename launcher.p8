@@ -886,8 +886,8 @@ function state.results:draw()
 	  printc('new high score!', 65, 65, 5)
 	  printc('new high score!', 64, 64, 10)
 	 end
-	 printc('press x to restart', 65, 81, 5)
-	 printc('press x to restart', 64, 80, 12)
+	 printc('press — to restart', 65, 81, 5)
+	 printc('press — to restart', 64, 80, 12)
 	end
 end
 
