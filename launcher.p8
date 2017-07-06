@@ -644,12 +644,12 @@ function state.gameplay:powerup()
   sfx(25)
  end
  if c == 4 then
-  gravitytimer = 4
+  gravitytimer = 5
   sfx(23)
   add(effects, class.poweruptext('gravity!'))
  end
  if c == 5 then
-  player.speedtimer = 6
+  player.speedtimer = 5
   add(effects, class.poweruptext('speed up!'))
   sfx(21)
  end
