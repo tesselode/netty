@@ -211,8 +211,8 @@ function class.player()
    else
     angle = atan2(self.vx, self.vy)
    end
-   self.vx += self.launchspeed * cos(angle) * self.charge
-   self.vy += self.launchspeed * sin(angle) * self.charge
+   self.vx = self.launchspeed * cos(angle) * self.charge
+   self.vy = self.launchspeed * sin(angle) * self.charge
    score.multiplier = 1
    
    -- effects
