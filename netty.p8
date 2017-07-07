@@ -552,7 +552,7 @@ function class.gridpoint(x, y)
   self.y = lerp(self.y, player.y, f/r)
   
   if gravitytimer > 0 then
-   self.y = lerp(self.y, 128, .01)
+   self.y = lerp(self.y, 128, .02)
   end
   
   self.x = lerp(self.x, self.anchorx, .1)
