@@ -97,6 +97,7 @@ function class.player()
  	vy = 0,
  	launching = false,
  	charge = 0,
+ 	launchdir = 0,
  	suctiontimer = 0,
  	sizetimer = 0,
  	speedtimer = 0,
@@ -191,26 +192,30 @@ function class.player()
   -- launching --
   
   -- start charge
-  if not self.launching and buttonpressed then
+  if not self.launching and buttonpressed and (btn(0) or btn(1) or btn(2) or btn(3)) then
    self.launching = true
    self.charge = 0
+   self.launchdir = atan2(inputx, inputy) + .5
    sfx(8, 2)
   end
   
   -- charge up
   if self.launching then
    self.charge += self.chargespeed
+   if btnp(0) or btnp(1) or btnp(2) or btnp(3) then
+    self.launchdir = atan2(inputx, inputy) + .5
+   end
   end
   
   -- launch
   if self.launching and (not btn(4) or self.charge >= 1) then
    self.launching = false
-   local angle
-   if btn(0) or btn(1) or btn(2) or btn(3) then
-    angle = atan2(inputx, inputy) + .5
-   else
-    angle = atan2(self.vx, self.vy)
-   end
+   local angle = self.launchdir
+   --if btn(0) or btn(1) or btn(2) or btn(3) then
+   -- angle = atan2(inputx, inputy) + .5
+   --else
+   -- angle = atan2(self.vx, self.vy)
+   --end
    self.vx = self.launchspeed * cos(angle) * self.charge
    self.vy = self.launchspeed * sin(angle) * self.charge
    score.multiplier = 1
@@ -281,7 +286,9 @@ function class.player()
   if self.launching then
    circfill(self.x, self.y, self.displayr * 4, 12)
    circfill(self.x, self.y, self.displayr + self.displayr*3*self.charge, 14)
-   line(self.x, self.y, self.x + inputx*self.displayr*4, self.y + inputy*self.r*4, 9)
+   local bx = cos(self.launchdir + .5) * self.displayr * 4
+   local by = sin(self.launchdir + .5) * self.displayr * 4
+   line(self.x, self.y, self.x + bx, self.y + by, 9)
   end
 
   -- draw trail
