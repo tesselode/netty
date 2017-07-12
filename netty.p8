@@ -9,6 +9,7 @@ cartdata("tesselode_netty")
 state = {}
 
 function gotostate(s, ...)
+ menuitem(4)
  state.current = s
  state.current:enter(...)
 end
@@ -660,6 +661,10 @@ function state.gameplay:enter()
 	for i = 1, 5 do
 		add(dots, class.dot())
 	end
+	
+	menuitem(4, 'retry', function()
+	 gotostate(state.transition, state.intro, true)
+	end)
 end
 
 function state.gameplay:powerup()
