@@ -69,8 +69,51 @@ local blackholes
 local effects
 local score
 local gravitytimer
-freezeframes = 0
-uptime = 0
+local freezeframes = 0
+local uptime = 0
+
+-- options
+local launchstyle
+local movestyle
+local firstrun = dget(2)
+if firstrun == 0 then
+ dset(3, 1)
+ dset(4, 0)
+ dset(2, 1)
+end
+
+function setlaunchstyle(s)
+ launchstyle = s
+ dset(3, s)
+ if s == 0 then
+  menuitem(1, 'launch: normal', function()
+   setlaunchstyle(1)
+  end)
+ end
+ if s == 1 then
+  menuitem(1, 'launch: inverted', function()
+   setlaunchstyle(0)
+  end)
+ end
+end
+
+function setmovestyle(s)
+ movestyle = s
+ dset(4, s)
+ if s == 0 then
+  menuitem(2, 'move: normal', function()
+   setmovestyle(1)
+  end)
+ end
+ if s == 1 then
+  menuitem(2, 'move: inverted', function()
+   setmovestyle(0)
+  end)
+ end
+end
+
+setlaunchstyle(dget(3))
+setmovestyle(dget(4))
 
 
 
@@ -134,8 +177,9 @@ function class.player()
   local speed = sqrt(self.vx*self.vx + self.vy*self.vy)
 
   -- acceleration
-  self.vx += inputx * self.accel * speed / self.maxspeed
-  self.vy += inputy * self.accel * speed / self.maxspeed
+  local d = movestyle == 1 and -1 or 1
+  self.vx += inputx * self.accel * speed / self.maxspeed * d
+  self.vy += inputy * self.accel * speed / self.maxspeed * d
 
   -- friction
   self.vx /= self.friction
@@ -196,7 +240,10 @@ function class.player()
    self.launching = true
    self.charge = 0
    if btn(0) or btn(1) or btn(2) or btn(3) then
-    self.launchdir = atan2(inputx, inputy) + .5
+    self.launchdir = atan2(inputx, inputy)
+    if launchstyle == 1 then
+     self.launchdir += .5
+    end
    else
     self.launchdir = atan2(self.vx, self.vy)
    end
@@ -207,7 +254,10 @@ function class.player()
   if self.launching then
    self.charge += self.chargespeed
    if btnp(0) or btnp(1) or btnp(2) or btnp(3) then
-    self.launchdir = atan2(inputx, inputy) + .5
+    self.launchdir = atan2(inputx, inputy)
+    if launchstyle == 1 then
+     self.launchdir += .5
+    end
    end
   end
   
@@ -285,8 +335,12 @@ function class.player()
   if self.launching then
    circfill(self.x, self.y, self.displayr * 4, 12)
    circfill(self.x, self.y, self.displayr + self.displayr*3*self.charge, 14)
-   local bx = -cos(self.launchdir) * self.displayr * 4
-   local by = -sin(self.launchdir) * self.displayr * 4
+   local bx = cos(self.launchdir) * self.displayr * 4
+   local by = sin(self.launchdir) * self.displayr * 4
+   if launchstyle == 1 then
+    bx = -bx
+    by = -by
+   end
    line(self.x, self.y, self.x + bx, self.y + by, 9)
   end
 
