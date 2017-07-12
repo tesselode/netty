@@ -6,3 +6,4 @@
   - [ ] Title screen intro animation
 - [ ] Grid palette swaps
 - [ ] In-game music?
+- [ ] Powerup text shadow is inconsistent with other shadows
