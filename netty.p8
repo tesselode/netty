@@ -134,8 +134,8 @@ function class.player()
   local speed = sqrt(self.vx*self.vx + self.vy*self.vy)
 
   -- acceleration
-  self.vx -= inputx * self.accel * speed / self.maxspeed
-  self.vy -= inputy * self.accel * speed / self.maxspeed
+  self.vx += inputx * self.accel * speed / self.maxspeed
+  self.vy += inputy * self.accel * speed / self.maxspeed
 
   -- friction
   self.vx /= self.friction
@@ -215,11 +215,6 @@ function class.player()
   if self.launching and (not btn(4) or self.charge >= 1) then
    self.launching = false
    local angle = self.launchdir
-   --if btn(0) or btn(1) or btn(2) or btn(3) then
-   -- angle = atan2(inputx, inputy) + .5
-   --else
-   -- angle = atan2(self.vx, self.vy)
-   --end
    self.vx = self.launchspeed * cos(angle) * self.charge
    self.vy = self.launchspeed * sin(angle) * self.charge
    score.multiplier = 1
@@ -290,8 +285,8 @@ function class.player()
   if self.launching then
    circfill(self.x, self.y, self.displayr * 4, 12)
    circfill(self.x, self.y, self.displayr + self.displayr*3*self.charge, 14)
-   local bx = cos(self.launchdir + .5) * self.displayr * 4
-   local by = sin(self.launchdir + .5) * self.displayr * 4
+   local bx = -cos(self.launchdir) * self.displayr * 4
+   local by = -sin(self.launchdir) * self.displayr * 4
    line(self.x, self.y, self.x + bx, self.y + by, 9)
   end
 
@@ -835,6 +830,14 @@ function state.gameplay:draw()
   c = 8
  end
  printc(t, 121, 9 + self.timeyoffset, c)
+ 
+ -- draw title
+ for i = 0, 4 do
+  local s = 6 + i * 2
+  local x = 128/2 - (15*5)/2 + 15*i
+  local y = 64 + 3.99 * sin(uptime/60 - 1/15*i)
+  --spr(s, x, y, 2, 2)
+ end
 end
 
 
