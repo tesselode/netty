@@ -7,3 +7,4 @@
 - [ ] Grid palette swaps
 - [ ] In-game music?
 - [ ] Powerup text shadow is inconsistent with other shadows
+- [ ] Put your name in the game somewhere
