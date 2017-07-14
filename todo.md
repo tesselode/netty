@@ -8,3 +8,4 @@
 - [ ] In-game music?
 - [ ] Powerup text shadow is inconsistent with other shadows
 - [ ] Put your name in the game somewhere
+- [ ] Put in an easter egg for hitting directly in the corner
