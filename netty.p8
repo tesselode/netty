@@ -40,6 +40,22 @@ shake.launch = {
 }
 
 
+-- grid palettes
+gridpalette = {
+ {1, 0, 0},
+ {0, 1, 1},
+ {3, 11, 11},
+ {5, 0, 0},
+ {0, 0, 8},
+ {13, 1, 1},
+ {4, 9, 15},
+ {9, 0, 0},
+ {8, 2, 2},
+ {14, 14, 12},
+ {7, 6, 6},
+}
+
+
 -- extra functions
 function printc(s, x, y, c, glyphs)
  glyphs = glyphs or 0
@@ -82,10 +98,17 @@ local uptime = 0
 local launchstyle
 local movestyle
 local firstrun = dget(2)
+local currentpalette = dget(5)
+if currentpalette == 0 then
+ currentpalette = 1
+end
+if currentpalette > #gridpalette then
+ currentpalette = 1
+end
 if firstrun == 0 then
- dset(3, 1)
- dset(4, 0)
- dset(2, 1)
+ dset(2, 1) -- first run
+ dset(3, 1) -- launch style
+ dset(4, 0) -- move style
 end
 
 function setlaunchstyle(s)
@@ -117,6 +140,14 @@ function setmovestyle(s)
   end)
  end
 end
+
+menuitem(3, 'change colors', function()
+ currentpalette += 1
+ if currentpalette > #gridpalette then
+  currentpalette = 1
+ end
+ dset(5, currentpalette)
+end)
 
 setlaunchstyle(dget(3))
 setmovestyle(dget(4))
@@ -367,6 +398,7 @@ function class.player()
    circfill(x, y, self.displayr, 11)
    circ(x, y, self.displayr, 10)
   else
+   circfill(x + 1, y + 1, self.displayr, 5)
    circfill(x, y, self.displayr, 7)
 	  circ(x, y, self.displayr, 6)
 	 end
@@ -834,19 +866,19 @@ function state.gameplay:draw()
  
  -- draw grid
  clip(2, 18, 126, 108)
- rectfill(0, 0, 128, 128, 1)
+ rectfill(0, 0, 128, 128, gridpalette[currentpalette][1])
 	for x = 0, 128, 16 do
 	 for y = 16, 112, 16 do
 	  local a = self.grid[x][y]
 	  local b = self.grid[x][y+16]
-	  line(a.x, a.y, b.x, b.y, 0)
+	  line(a.x, a.y, b.x, b.y, gridpalette[currentpalette][2])
 	 end
 	end
 	for x = 0, 112, 16 do
 	 for y = 16, 128, 16 do
 	  local a = self.grid[x][y]
 	  local b = self.grid[x+16][y]
-	  line(a.x, a.y, b.x, b.y, 0)
+	  line(a.x, a.y, b.x, b.y, gridpalette[currentpalette][3])
 	 end
 	end
 	clip()
@@ -1119,14 +1151,14 @@ function state.title:draw()
  
  clip(2, 18, 126, 108)
  
- rectfill(0, 0, 128, 128, 1)
+ rectfill(0, 0, 128, 128, gridpalette[currentpalette][1])
 
  -- draw grid
  for x = 0, 128, 16 do
-  line(x, 16, x, 128, 0)
+  line(x, 16, x, 128, gridpalette[currentpalette][2])
  end
  for y = 16, 128, 16 do
-  line(0, y, 128, y, 0)
+  line(0, y, 128, y, gridpalette[currentpalette][3])
  end
  
  clip()
