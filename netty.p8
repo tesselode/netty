@@ -580,7 +580,7 @@ function class.poweruptext(s)
  end
  
  function text:draw()
-  printc(self.s, 64, 65 + self.y, 5)
+  printc(self.s, 65, 65 + self.y, 5)
   printc(self.s, 64, 64 + self.y, 11)
  end
  
