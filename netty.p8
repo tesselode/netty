@@ -886,11 +886,15 @@ end
 function state.gameplay:powerup()
  -- shuffle powerups
  if #self.powerups == 0 then
-  if gametype == 3 then
-   self.powerups = {2, 3, 4, 5}
-  else
+	 if gametype == 1 then
 		 self.powerups = {1, 2, 3, 4, 5, 6}
 		end
+		if gametype == 2 then
+		 self.powerups = {2, 3, 4, 5, 6}
+		end
+  if gametype == 3 then
+   self.powerups = {2, 3, 4, 5}
+  end 
 	 for _ = 1, 10 do
 		 for i = 1, #self.powerups - 1 do
 	   local j = i + 1
