@@ -109,7 +109,7 @@ function ceil(x)
  if x == flr(x) then
   return x
  else
-  return flr(x) + sign(x)
+  return flr(x) + 1
  end
 end
 
@@ -122,7 +122,7 @@ end
 
 
 -- globals
-gametype = 3
+gametype = 2
 player = nil
 dots = nil
 blackholes = nil
@@ -1161,8 +1161,13 @@ function state.results:update()
 	 end
 	end
 
- if self.statetimer <= 0 and btnp(4) then
-  gotostate(state.transition, state.intro, true)
+ if self.statetimer <= 0 then
+	 if btnp(4) then
+ 	 gotostate(state.transition, state.intro, true)
+	 end
+	 if btnp(5) then
+	  gotostate(state.transition, state.title, true)
+  end
  end
 end
 
@@ -1195,8 +1200,8 @@ function state.results:draw()
 	  printc('new high score!', 65, 65, 5)
 	  printc('new high score!', 64, 64, 10)
 	 end
-	 printc('press Ž to restart', 65, 81, 5, 1)
-	 printc('press Ž to restart', 64, 80, 12, 1)
+	 printc('Ž retry   — title', 65, 81, 5, 1)
+	 printc('Ž retry   — title', 64, 80, 12, 1)
 	end
 end
 
