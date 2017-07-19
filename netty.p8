@@ -3,9 +3,6 @@ version 8
 __lua__
 -- netty
 -- andrew minnich
-
-
-
 cartdata("tesselode_netty")
 
 
@@ -42,17 +39,18 @@ shake.launch = {
 
 -- grid palettes
 gridpalette = {
- {1, 0, 0},
- {0, 1, 1},
- {3, 11, 11},
- {5, 0, 0},
- {0, 0, 8},
- {13, 1, 1},
- {4, 9, 15},
- {9, 0, 0},
- {8, 2, 2},
- {14, 14, 12},
- {7, 6, 6},
+ {1, 0, 0, 6, 12},
+ {0, 1, 1, 5, 1},
+ {3, 11, 11, 11, 3},
+ {5, 0, 0, 0, 0},
+ {0, 0, 8, 8, 8},
+ {13, 1, 1, 6, 1},
+ {4, 9, 15, 4, 9},
+ {9, 0, 0, 10, 9},
+ {8, 2, 2, 6, 14},
+ {14, 14, 12, 6, 12},
+ {7, 6, 6, 7, 7},
+ {0, 1, 0, 0, 7},
 }
 
 
@@ -83,22 +81,29 @@ function lerp(a, b, f)
  return a + (b-a) * f
 end
 
+function drawborder()
+ pal(6, gridpalette[currentpalette][4])
+ pal(12, gridpalette[currentpalette][5])
+ map(0, 0, 0, 0, 16, 16)
+ pal()
+end
+
 
 -- globals
-local player
-local dots
-local blackholes
-local effects
-local score
-local gravitytimer
-local freezeframes = 0
-local uptime = 0
+player = nil
+dots = nil
+blackholes = nil
+effects = nil
+score = nil
+gravitytimer = nil
+freezeframes = 0
+uptime = 0
 
 -- options
-local launchstyle
-local movestyle
-local firstrun = dget(2)
-local currentpalette = dget(5)
+launchstyle = nil
+movestyle = nil
+firstrun = dget(2)
+currentpalette = dget(5)
 if currentpalette == 0 then
  currentpalette = 1
 end
@@ -883,8 +888,7 @@ function state.gameplay:draw()
 	end
 	clip()
  
- -- draw map
- map(0, 0, 0, 0, 16, 16)
+ drawborder()
  	
 	-- draw entities
  for b in all(blackholes) do
@@ -1061,16 +1065,6 @@ function state.intro:draw()
  
  clip(2, 18, 126, 108)
  
- --rectfill(0, 0, 128, 128, 1)
-
- -- draw grid
- for x = 0, 128, 16 do
-  --line(x, 16, x, 128, 1)
- end
- for y = 16, 128, 16 do
-  --line(0, y, 128, y, 1)
- end
- 
  -- draw rings
  for i = 1, #self.rings do
   local r = self.rings[i]
@@ -1078,8 +1072,6 @@ function state.intro:draw()
  end
  
  clip()
- 
- --map(0, 0, 0, 0, 16, 16)
  
  -- draw hud
  print('score', 2, 2, 5)
@@ -1124,7 +1116,7 @@ function state.transition:draw()
   clip(0, 16, 128, 112)
  end
  circfill(64, 64, self.r, 0)
- circfill(64, 64, self.r/2, 1)
+ circfill(64, 64, self.r/2, gridpalette[currentpalette][1])
  circfill(64, 64, self.r/4, 0)
  clip()
 end
@@ -1163,7 +1155,7 @@ function state.title:draw()
  
  clip()
  
- map(0, 0, 0, 0, 16, 16)
+ drawborder()
 
  -- draw hud
  print('score', 2, 2, 5)
