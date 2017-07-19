@@ -187,6 +187,7 @@ function class.player()
  	y = 64,
  	vx = 0,
  	vy = 0,
+ 	canlaunch = true,
  	launching = false,
  	charge = 0,
  	launchdir = 0,
@@ -286,17 +287,21 @@ function class.player()
   
   -- start charge
   if not self.launching and buttonpressed then
-   self.launching = true
-   self.charge = 0
-   if btn(0) or btn(1) or btn(2) or btn(3) then
-    self.launchdir = atan2(inputx, inputy)
-    if launchstyle == 1 then
-     self.launchdir += .5
-    end
-   else
-    self.launchdir = atan2(self.vx, self.vy)
-   end
-   sfx(8, 2)
+   if self.canlaunch then
+	   self.launching = true
+	   self.charge = 0
+	   if btn(0) or btn(1) or btn(2) or btn(3) then
+	    self.launchdir = atan2(inputx, inputy)
+	    if launchstyle == 1 then
+	     self.launchdir += .5
+	    end
+	   else
+	    self.launchdir = atan2(self.vx, self.vy)
+	   end
+	   sfx(8, 2)
+	  else
+	   sfx(35)
+	  end
   end
   
   -- charge up
@@ -312,6 +317,7 @@ function class.player()
   
   -- launch
   if self.launching and (not btn(4) or self.charge >= 1) then
+   state.gameplay:onlaunch()
    self.launching = false
    local angle = self.launchdir
    self.vx = self.launchspeed * cos(angle) * self.charge
@@ -678,7 +684,7 @@ end
 
 state.gameplay = {}
 
-function state.gameplay:enter()
+function state.gameplay:enter(gametype)
 	player = class.player()
 	dots = {}
 	blackholes = {}
@@ -689,6 +695,7 @@ function state.gameplay:enter()
 	 multiplier = 1,
 	 dotscollected = 0,
 	 timeleft = 60,
+	 movesleft = 15,
 	}
 	cam = {
 	 sequence = {{0, 0}},
@@ -697,6 +704,9 @@ function state.gameplay:enter()
 	gravitytimer = 0
 	
 	self.powerups = {}
+	self.gametype = 2
+	
+	-- cosmetic
 	self.grid = {}
 	for x = 0, 128, 16 do
 	 self.grid[x] = {}
@@ -769,10 +779,22 @@ function state.gameplay:powerup()
   sfx(21, 3)
  end
  if c == 6 then
-  score.timeleft += 5
-  add(effects, class.poweruptext('extra time!'))
+  if self.gametype == 1 then
+	  score.timeleft += 5
+	  add(effects, class.poweruptext('extra time!'))
+	 else
+	  score.movesleft += 3
+	  add(effects, class.poweruptext('extra launches!'))
+	 end  
   sfx(33, 3)
  end
+end
+
+function state.gameplay:onlaunch()
+ if self.gametype == 2 then
+  score.movesleft -= 1
+ end
+ self.timeyoffset = 4
 end
 
 function state.gameplay:update()
@@ -781,10 +803,23 @@ function state.gameplay:update()
   return
  end
 
- score.timeleft -= 1/60
- if score.timeleft <= 0 then
-  gotostate(state.results)
- end
+ if self.gametype == 1 then
+	 score.timeleft -= 1/60
+	 if score.timeleft <= 0 then
+	  gotostate(state.results)
+	 end
+	end
+	if self.gametype == 2 then
+	 player.canlaunch = score.movesleft > 0
+	 if score.movesleft == 0 then
+	  score.timeleft -= 1/60
+	  if score.timeleft <= 0 then
+		  gotostate(state.results)
+		 end
+		else
+			score.timeleft = 10
+		end
+	end
  
  if gravitytimer > 0 then
   gravitytimer -= 1/60
@@ -862,14 +897,18 @@ function state.gameplay:update()
  
  -- update hud animations
  self.timeyoffset = lerp(self.timeyoffset, 0, .2)
- self.secondtimer -= 1/60
- if self.secondtimer <= 0 then
-  self.secondtimer += 1
-  if score.timeleft < 10 then
-   self.timeyoffset = 4
-   sfx(29)
-  end
- end
+ if self.gametype == 1 or score.movesleft == 0 then
+	 self.secondtimer -= 1/60
+	 if self.secondtimer <= 0 then
+	  self.secondtimer += 1
+	  if score.timeleft < 10 then
+	   self.timeyoffset = 4
+	   sfx(29)
+	  end
+	 end
+	else
+	 self.secondtimer = 1
+	end
  
  -- rolling score counter
  self.displayscore = lerp(self.displayscore, score.score, .25)
@@ -952,17 +991,31 @@ function state.gameplay:draw()
  print(s, 26, 10, 5)
  print(s, 25, 9, 7)
  
- -- time left
- print('time', 114, 2, 5)
- print('time', 113, 1, 7)
- local t = flr(score.timeleft) + 1
- t = t .. ''
- printc(t, 122, 10 + self.timeyoffset, 5)
- local c = 7
- if score.timeleft < 10 then
-  c = 8
- end
- printc(t, 121, 9 + self.timeyoffset, c)
+ -- time/moves left
+ if self.gametype == 1 or score.movesleft == 0 then
+	 print('time', 113, 2, 5)
+	 print('time', 112, 1, 7)
+	 local t = flr(score.timeleft) + 1
+	 t = t .. ''
+	 printc(t, 121, 10 + self.timeyoffset, 5)
+	 local c = 7
+	 if score.timeleft < 10 then
+	  c = 8
+	 end
+	 printc(t, 120, 9 + self.timeyoffset, c)
+	else
+	 print('left', 113, 2, 5)
+	 print('left', 112, 1, 7)
+	 local t = score.movesleft
+	 t = t .. ''
+	 printc(t, 121, 10 + self.timeyoffset, 5)
+	 local c = 7
+	 if score.movesleft < 5 then
+	  c = 8
+	 end
+	 printc(t, 120, 9 + self.timeyoffset, c)
+	end
+	 
  
  -- draw title
  for i = 0, 4 do
@@ -1586,7 +1639,7 @@ __sfx__
 010700002015025150271502c1502215027150291502e15024150291502b150301503015000100001000010000000000000000000000000000000000000000000000000000000000000000000000000000000400
 00050000180500000019050000001a050000001b050000001c050000001d050000001e050000001f0500000020050000002105000000220500000023050000002405025000250500000026050000002705000500
 0006000124054290020e0020f0021000211002120021300214002150021600217002190021a0021b0021c0021d0021e0021f002200022100222002230022400225002260022700228002290022a0022b0022c002
-01100000001050010507005001050c105001050c1050010500005070050c1050000507005000050710505005001050010507005001050c105001050c1050010500005070050c1050000507005000050710511005
+010500001f0551905507005001050c105001050c1050010500005070050c1050000507005000050710505005001050010507005001050c105001050c1050010500005070050c1050000507005000050710511005
 01100000001050010507005001050c105001050c1050010500005070050c1050000507005000050710505005001050010507005001050c105001050c1050010500005070050c1050000507005000050710511005
 01100000001050010507005001050c105001050c1050010500005070050c1050000507005000050710505005001050010507005001050c105001050c1050010500005070050c1050000507005000050710511005
 01100000001050010507005001050c105001050c1050010500005070050c1050000507005000050710505005001050010507005001050c105001050c1050010500005070050c1050000507005000050710511005
