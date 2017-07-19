@@ -606,6 +606,7 @@ function class.scorepopup(x, y, score, col)
  end
  
  function scorepopup:draw()
+  if state.gameplay.gametype == 3 then return false end
   local s = self.score .. '00'
 	 printc(s, self.x + 1, self.y + 1, 5)
   printc(s, self.x, self.y, self.col)
@@ -630,6 +631,7 @@ function class.poweruptext(s)
  end
  
  function text:draw()
+  if state.gameplay.gametype == 3 then return false end
   printc(self.s, 65, 65 + self.y, 5)
   printc(self.s, 64, 64 + self.y, 11)
  end
@@ -704,7 +706,7 @@ function state.gameplay:enter(gametype)
 	gravitytimer = 0
 	
 	self.powerups = {}
-	self.gametype = 2
+	self.gametype = 3
 	
 	-- cosmetic
 	self.grid = {}
@@ -714,6 +716,12 @@ function state.gameplay:enter(gametype)
 	  self.grid[x][y] = class.gridpoint(x, y)
 	 end
 	end
+	
+	self.cutedots = {}
+	for i = 1, 8 do
+	 self.cutedots[i] = 0
+	end
+	 
 	self.timeyoffset = 0
 	self.secondtimer = 1
 	self.displayscore = 0
@@ -730,7 +738,11 @@ end
 function state.gameplay:powerup()
  -- shuffle powerups
  if #self.powerups == 0 then
-	 self.powerups = {1, 2, 3, 4, 5, 6}
+  if self.gametype == 3 then
+   self.powerups = {2, 3, 4, 5}
+  else
+		 self.powerups = {1, 2, 3, 4, 5, 6}
+		end
 	 for _ = 1, 10 do
 		 for i = 1, #self.powerups - 1 do
 	   local j = i + 1
@@ -915,6 +927,13 @@ function state.gameplay:update()
  if self.displayscore % 1 > .99 then
   self.displayscore = flr(self.displayscore) + 1
  end
+ 
+ -- update zen mode visualizer
+ local wiggle = 4000 * sin(uptime/60) * (score.score - self.displayscore) / 400
+ self.cutedots[1] = lerp(self.cutedots[1], wiggle, .1)
+ for i = 8, 2, -1 do
+  self.cutedots[i] = lerp(self.cutedots[i], self.cutedots[i-1], .1)
+ end
 end
 
 function state.gameplay:draw()
@@ -955,7 +974,28 @@ function state.gameplay:draw()
   e:draw()
  end
  
+ -- draw zen mode visualizer
+ if self.gametype == 3 then
+	 for i = 1, 8 do
+	  local x = 32 + 8 * (i - 1)
+	  local wiggle = self.cutedots[i]
+	  if wiggle < -4 then wiggle = -4 end
+	  if wiggle > 4 then wiggle = 4 end
+	  local y = round(8 + wiggle)
+	  local c = 5
+	  if abs(wiggle) > 1 then
+	   c = gridpalette[currentpalette][4]
+	  end
+	  if abs(wiggle) > 3 then
+	   c = gridpalette[currentpalette][5]
+	  end
+	  circfill(x, y, 2, c)
+	 end
+	end
+ 
  -- draw hud
+ if self.gametype == 3 then return false end
+ 
  camera()
  
  -- score counter
