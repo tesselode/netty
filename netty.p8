@@ -51,7 +51,6 @@ gridpalette = {
  {14, 14, 12, 6, 12, 'cute',},
  {7, 6, 6, 7, 7, 'sterile',},
  {0, 1, 0, 0, 7, 'depths',},
- {0, 0, 0, 0, 0, 'nothing',},
 }
 
 
@@ -78,8 +77,24 @@ function sign(x)
  end
 end
 
+function clamp(x, a, b)
+ if x < a then
+  return a
+ elseif x > b then
+  return b
+ else
+  return x
+ end
+end
+
 function lerp(a, b, f)
  return a + (b-a) * f
+end
+
+function lerpl(a, b, f, m)
+ local d = (b-a) * f
+ d = clamp(d, -m, m)
+ return a + d
 end
 
 function round(x)
@@ -87,6 +102,14 @@ function round(x)
   return flr(x) + 1
  else
   return flr(x)
+ end
+end
+
+function ceil(x)
+ if x == flr(x) then
+  return x
+ else
+  return flr(x) + sign(x)
  end
 end
 
@@ -99,6 +122,7 @@ end
 
 
 -- globals
+gametype = 3
 player = nil
 dots = nil
 blackholes = nil
@@ -606,7 +630,6 @@ function class.scorepopup(x, y, score, col)
  end
  
  function scorepopup:draw()
-  if state.gameplay.gametype == 3 then return false end
   local s = self.score .. '00'
 	 printc(s, self.x + 1, self.y + 1, 5)
   printc(s, self.x, self.y, self.col)
@@ -631,7 +654,6 @@ function class.poweruptext(s)
  end
  
  function text:draw()
-  if state.gameplay.gametype == 3 then return false end
   printc(self.s, 65, 65 + self.y, 5)
   printc(self.s, 64, 64 + self.y, 11)
  end
@@ -679,6 +701,141 @@ function class.gridpoint(x, y)
 
  return point
 end
+
+
+
+-- hud --
+
+hud = {
+ timeyoffset = 0,
+ displayscore = 0,
+ cutedots = {0, 0, 0, 0, 0, 0, 0, 0},
+}
+
+function hud:tickdown(playsound)
+ self.timeyoffset = 4
+ if playsound then sfx(29) end
+end
+
+function hud:update()
+ local s = 0
+ 
+ if state.current == state.gameplay or state.current == state.results then
+  s = score.score
+ end
+
+ -- timer animation
+ self.timeyoffset = lerp(self.timeyoffset, 0, .2)
+	 
+ -- rolling score counter
+ if state.current == state.gameplay or state.current == state.results then
+	 self.displayscore = lerp(self.displayscore, s, .25)
+	 if self.displayscore % 1 > .99 then
+	  self.displayscore = flr(self.displayscore) + 1
+	 end
+	else
+	 self.displayscore = 0
+	end
+
+ if gametype == 3 then
+  -- update zen mode visualizer
+	 local wiggle = 1000 * sin(uptime/240) * (s - self.displayscore) / 100
+	 self.cutedots[1] = lerpl(self.cutedots[1], wiggle, .1, 1)
+	 for i = 8, 2, -1 do
+	  self.cutedots[i] = lerp(self.cutedots[i], self.cutedots[i-1], .1)
+	 end
+	end
+end
+
+function hud:draw()
+ local scoredisplayy = 0
+ local timeleft = 60
+ local movesleft = 15
+
+ if state.current == state.gameplay or state.current == state.results then
+  timeleft = score.timeleft
+  movesleft = score.movesleft
+ 
+  scoredisplayy = 400 * (score.score - self.displayscore) / 200
+	 if scoredisplayy > 2 then scoredisplayy = 2 end
+	 scoredisplayy = round(scoredisplayy)
+	end
+
+ if gametype == 3 then
+  -- draw zen mode visualizer
+	 for i = 1, 8 do
+	  local x = 36 + 8 * (i - 1)
+	  local wiggle = self.cutedots[i]
+	  wiggle = clamp(wiggle, -4 ,4)
+	  local y = round(8 + wiggle)
+	  local c = 5
+	  if abs(wiggle) > 1 then
+	   c = gridpalette[currentpalette][4]
+	  end
+	  if abs(wiggle) > 3 then
+	   c = gridpalette[currentpalette][5]
+	  end
+	  circfill(x, y, 2, c)
+	 end
+	 return false
+	end
+	
+	-- score counter
+ local s
+ if self.displayscore == 0 then
+  s = 0
+ else
+  local whole = flr(self.displayscore)
+  local decimal = self.displayscore % 1
+  if whole == 0 then whole = '' end
+  if decimal == 0 then
+   s = whole .. '00'
+  else
+   decimal = decimal .. ''
+	  s = whole .. sub(decimal, 3, 4)
+	 end
+ end
+ 
+ print('score', 2, 2, 5)
+ print('score', 1, 1, 12)
+ print(s, 26, 2 + scoredisplayy, 5)
+ print(s, 25, 1 + scoredisplayy, 7)
+ 
+ -- high score
+ local s = dget(gametype-1)
+ if s ~= 0 then
+  s = s .. '00'
+ end
+ print('high', 2, 10, 5)
+ print('high', 1, 9, 10)
+ print(s, 26, 10, 5)
+ print(s, 25, 9, 7)
+ 
+ -- time/moves left
+ if gametype == 1 or movesleft == 0 then
+	 print('time', 113, 2, 5)
+	 print('time', 112, 1, 7)
+	 local t = ceil(timeleft)
+	 t = t .. ''
+	 printc(t, 121, 10 + self.timeyoffset, 5)
+	 local c = 7
+	 if timeleft <= 10 then
+	  c = 8
+	 end
+	 printc(t, 120, 9 + self.timeyoffset, c)
+	else
+	 print('left', 113, 2, 5)
+	 print('left', 112, 1, 7)
+	 local t = movesleft
+	 t = t .. ''
+	 printc(t, 121, 10 + self.timeyoffset, 5)
+	 local c = 7
+	 if movesleft < 5 then
+	  c = 8
+	 end
+	 printc(t, 120, 9 + self.timeyoffset, c)
+	end
+end
   
 
 
@@ -693,7 +850,6 @@ function state.gameplay:enter(gametype)
 	effects = {}
 	score = {
 	 score = 0,
-	 highscore = dget(0),
 	 multiplier = 1,
 	 dotscollected = 0,
 	 timeleft = 60,
@@ -706,7 +862,6 @@ function state.gameplay:enter(gametype)
 	gravitytimer = 0
 	
 	self.powerups = {}
-	self.gametype = 3
 	
 	-- cosmetic
 	self.grid = {}
@@ -716,15 +871,8 @@ function state.gameplay:enter(gametype)
 	  self.grid[x][y] = class.gridpoint(x, y)
 	 end
 	end
-	
-	self.cutedots = {}
-	for i = 1, 8 do
-	 self.cutedots[i] = 0
-	end
 	 
-	self.timeyoffset = 0
 	self.secondtimer = 1
-	self.displayscore = 0
 	
 	for i = 1, 5 do
 		add(dots, class.dot())
@@ -738,7 +886,7 @@ end
 function state.gameplay:powerup()
  -- shuffle powerups
  if #self.powerups == 0 then
-  if self.gametype == 3 then
+  if gametype == 3 then
    self.powerups = {2, 3, 4, 5}
   else
 		 self.powerups = {1, 2, 3, 4, 5, 6}
@@ -791,7 +939,7 @@ function state.gameplay:powerup()
   sfx(21, 3)
  end
  if c == 6 then
-  if self.gametype == 1 then
+  if gametype == 1 then
 	  score.timeleft += 5
 	  add(effects, class.poweruptext('extra time!'))
 	 else
@@ -803,10 +951,10 @@ function state.gameplay:powerup()
 end
 
 function state.gameplay:onlaunch()
- if self.gametype == 2 then
+ if gametype == 2 then
   score.movesleft -= 1
+  hud:tickdown()
  end
- self.timeyoffset = 4
 end
 
 function state.gameplay:update()
@@ -815,13 +963,13 @@ function state.gameplay:update()
   return
  end
 
- if self.gametype == 1 then
+ if gametype == 1 then
 	 score.timeleft -= 1/60
 	 if score.timeleft <= 0 then
 	  gotostate(state.results)
 	 end
 	end
-	if self.gametype == 2 then
+	if gametype == 2 then
 	 player.canlaunch = score.movesleft > 0
 	 if score.movesleft == 0 then
 	  score.timeleft -= 1/60
@@ -908,32 +1056,17 @@ function state.gameplay:update()
  end
  
  -- update hud animations
- self.timeyoffset = lerp(self.timeyoffset, 0, .2)
- if self.gametype == 1 or score.movesleft == 0 then
+ if gametype == 1 or score.movesleft == 0 then
 	 self.secondtimer -= 1/60
 	 if self.secondtimer <= 0 then
 	  self.secondtimer += 1
 	  if score.timeleft < 10 then
-	   self.timeyoffset = 4
-	   sfx(29)
+	   hud:tickdown(true)
 	  end
 	 end
 	else
 	 self.secondtimer = 1
 	end
- 
- -- rolling score counter
- self.displayscore = lerp(self.displayscore, score.score, .25)
- if self.displayscore % 1 > .99 then
-  self.displayscore = flr(self.displayscore) + 1
- end
- 
- -- update zen mode visualizer
- local wiggle = 4000 * sin(uptime/60) * (score.score - self.displayscore) / 400
- self.cutedots[1] = lerp(self.cutedots[1], wiggle, .1)
- for i = 8, 2, -1 do
-  self.cutedots[i] = lerp(self.cutedots[i], self.cutedots[i-1], .1)
- end
 end
 
 function state.gameplay:draw()
@@ -974,96 +1107,10 @@ function state.gameplay:draw()
   e:draw()
  end
  
- -- draw zen mode visualizer
- if self.gametype == 3 then
-	 for i = 1, 8 do
-	  local x = 32 + 8 * (i - 1)
-	  local wiggle = self.cutedots[i]
-	  if wiggle < -4 then wiggle = -4 end
-	  if wiggle > 4 then wiggle = 4 end
-	  local y = round(8 + wiggle)
-	  local c = 5
-	  if abs(wiggle) > 1 then
-	   c = gridpalette[currentpalette][4]
-	  end
-	  if abs(wiggle) > 3 then
-	   c = gridpalette[currentpalette][5]
-	  end
-	  circfill(x, y, 2, c)
-	 end
-	end
- 
  -- draw hud
- if self.gametype == 3 then return false end
+ if gametype == 3 then return false end
  
  camera()
- 
- -- score counter
- local s
- if self.displayscore == 0 then
-  s = 0
- else
-  local whole = flr(self.displayscore)
-  local decimal = self.displayscore % 1
-  if whole == 0 then whole = '' end
-  if decimal == 0 then
-   s = whole .. '00'
-  else
-   decimal = decimal .. ''
-	  s = whole .. sub(decimal, 3, 4)
-	 end
- end
- local y = 400 * (score.score - self.displayscore) / 200
- if y > 2 then y = 2 end
- y = round(y)
- print('score', 2, 2, 5)
- print('score', 1, 1, 12)
- print(s, 26, 2 + y, 5)
- print(s, 25, 1 + y, 7)
- 
- -- high score
- local s = score.highscore
- if s ~= 0 then
-  s = s .. '00'
- end
- print('high', 2, 10, 5)
- print('high', 1, 9, 10)
- print(s, 26, 10, 5)
- print(s, 25, 9, 7)
- 
- -- time/moves left
- if self.gametype == 1 or score.movesleft == 0 then
-	 print('time', 113, 2, 5)
-	 print('time', 112, 1, 7)
-	 local t = flr(score.timeleft) + 1
-	 t = t .. ''
-	 printc(t, 121, 10 + self.timeyoffset, 5)
-	 local c = 7
-	 if score.timeleft < 10 then
-	  c = 8
-	 end
-	 printc(t, 120, 9 + self.timeyoffset, c)
-	else
-	 print('left', 113, 2, 5)
-	 print('left', 112, 1, 7)
-	 local t = score.movesleft
-	 t = t .. ''
-	 printc(t, 121, 10 + self.timeyoffset, 5)
-	 local c = 7
-	 if score.movesleft < 5 then
-	  c = 8
-	 end
-	 printc(t, 120, 9 + self.timeyoffset, c)
-	end
-	 
- 
- -- draw title
- for i = 0, 4 do
-  local s = 6 + i * 2
-  local x = 128/2 - (15*5)/2 + 15*i
-  local y = 64 + 3.99 * sin(uptime/60 - 1/15*i)
-  --spr(s, x, y, 2, 2)
- end
 end
 
 
@@ -1079,9 +1126,9 @@ function state.results:enter()
  sfx(31)
 
  self.newhighscore = false
- if score.score > score.highscore then
+ if score.score > dget(gametype-1) then
   self.newhighscore = true
-  dset(0, score.score)
+  dset(gametype-1, score.score)
  end
  
  self.statetimer = 4
@@ -1120,6 +1167,8 @@ function state.results:update()
 end
 
 function state.results:draw()
+ state.gameplay:draw()
+
  rectfill(8, 32, 120, 96, 0)
  
  if self.statetimer <= 2 then
@@ -1132,8 +1181,13 @@ function state.results:draw()
 	 printc(s, 65, 49, 5)
 	 printc(s, 64, 48, 7)
 	else
- 	printc('time up!', 65, 65, 5)
-	 printc('time up!', 64, 64, 7)
+	 if gametype == 1 then
+	 	printc('time up!', 65, 65, 5)
+		 printc('time up!', 64, 64, 7)
+		elseif gametype == 2 then
+		 printc('out of moves!', 65, 65, 5)
+		 printc('out of moves!', 64, 64, 7)
+		end
 	end
 	
 	if self.statetimer <= 0 then
@@ -1198,24 +1252,6 @@ function state.intro:draw()
  end
  
  clip()
- 
- -- draw hud
- print('score', 2, 2, 5)
- print('score', 1, 1, 12)
- print(0, 26, 2, 5)
- print(0, 25, 1, 7)
- local s = dget(0)
- if s ~= 0 then
-  s = s .. '00'
- end
- print('high', 2, 10, 5)
- print('high', 1, 9, 10)
- print(s, 26, 10, 5)
- print(s, 25, 9, 7)
- print('time', 114, 2, 5)
- print('time', 113, 1, 7)
- printc(60, 122, 10, 5)
- printc(60, 121, 9, 7)
 end
 
 
@@ -1283,24 +1319,6 @@ function state.title:draw()
  
  drawborder()
 
- -- draw hud
- print('score', 2, 2, 5)
- print('score', 1, 1, 12)
- print(0, 26, 2, 5)
- print(0, 25, 1, 7)
- local s = dget(0)
- if s ~= 0 then
-  s = s .. '00'
- end
- print('high', 2, 10, 5)
- print('high', 1, 9, 10)
- print(s, 26, 10, 5)
- print(s, 25, 9, 7)
- print('time', 114, 2, 5)
- print('time', 113, 1, 7)
- printc(60, 122, 10, 5)
- printc(60, 121, 9, 7)
-
  -- draw title
  for i = 0, 4 do
   local s = 6 + i * 2
@@ -1342,10 +1360,14 @@ end
 function _update60()
  uptime += 1
  state.current:update()
+ hud:update()
 end
 
 function _draw()
  state.current:draw()
+ if state.current ~= state.transition then
+	 hud:draw()
+	end
 end
 
 __gfx__
