@@ -830,7 +830,7 @@ function hud:draw()
 	 t = t .. ''
 	 printc(t, 121, 10 + self.timeyoffset, 5)
 	 local c = 7
-	 if movesleft < 5 then
+	 if movesleft <= 5 then
 	  c = 8
 	 end
 	 printc(t, 120, 9 + self.timeyoffset, c)
