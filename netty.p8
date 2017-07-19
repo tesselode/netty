@@ -39,18 +39,19 @@ shake.launch = {
 
 -- grid palettes
 gridpalette = {
- {1, 0, 0, 6, 12},
- {0, 1, 1, 5, 1},
- {3, 11, 11, 11, 3},
- {5, 0, 0, 0, 0},
- {0, 0, 8, 8, 8},
- {13, 1, 1, 6, 1},
- {4, 9, 15, 4, 9},
- {9, 0, 0, 10, 9},
- {8, 2, 2, 6, 14},
- {14, 14, 12, 6, 12},
- {7, 6, 6, 7, 7},
- {0, 1, 0, 0, 7},
+ {1, 0, 0, 6, 12, 'netty'},
+ {0, 1, 1, 5, 1, 'nite',},
+ {3, 11, 11, 11, 3, 'circuit',},
+ {5, 0, 0, 0, 0, 'lumines',},
+ {0, 0, 8, 8, 8, 'evil',},
+ {13, 1, 1, 6, 1, 'murky',},
+ {4, 9, 15, 4, 9, 'waffle',},
+ {9, 0, 0, 10, 9, 'bee',},
+ {8, 2, 2, 6, 14, 'punch',},
+ {14, 14, 12, 6, 12, 'cute',},
+ {7, 6, 6, 7, 7, 'sterile',},
+ {0, 1, 0, 0, 7, 'depths',},
+ {0, 0, 0, 0, 0, 'nothing',},
 }
 
 
@@ -111,17 +112,12 @@ uptime = 0
 launchstyle = nil
 movestyle = nil
 firstrun = dget(2)
-currentpalette = dget(5)
-if currentpalette == 0 then
- currentpalette = 1
-end
-if currentpalette > #gridpalette then
- currentpalette = 1
-end
+currentpalette = nil
 if firstrun == 0 then
  dset(2, 1) -- first run
  dset(3, 1) -- launch style
  dset(4, 0) -- move style
+ dset(5, 1) -- color palette
 end
 
 function setlaunchstyle(s)
@@ -154,16 +150,19 @@ function setmovestyle(s)
  end
 end
 
-menuitem(3, 'change colors', function()
- currentpalette += 1
- if currentpalette > #gridpalette then
-  currentpalette = 1
- end
- dset(5, currentpalette)
-end)
+function setcolorpalette(c)
+ if c < 1 then c = 1 end
+ if c > #gridpalette then c = 1 end
+ currentpalette = c
+ dset(5, c)
+ menuitem(3, 'color: ' .. gridpalette[currentpalette][6], function()
+  setcolorpalette(currentpalette + 1)
+ end)
+end
 
 setlaunchstyle(dget(3))
 setmovestyle(dget(4))
+setcolorpalette(dget(5))
 
 
 
