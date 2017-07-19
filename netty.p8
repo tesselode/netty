@@ -81,6 +81,14 @@ function lerp(a, b, f)
  return a + (b-a) * f
 end
 
+function round(x)
+ if x % 1 > .5 then
+  return flr(x) + 1
+ else
+  return flr(x)
+ end
+end
+
 function drawborder()
  pal(6, gridpalette[currentpalette][4])
  pal(12, gridpalette[currentpalette][5])
@@ -699,6 +707,7 @@ function state.gameplay:enter()
 	end
 	self.timeyoffset = 0
 	self.secondtimer = 1
+	self.displayscore = 0
 	
 	for i = 1, 5 do
 		add(dots, class.dot())
@@ -862,6 +871,12 @@ function state.gameplay:update()
    sfx(29)
   end
  end
+ 
+ -- rolling score counter
+ self.displayscore = lerp(self.displayscore, score.score, .25)
+ if self.displayscore % 1 > .99 then
+  self.displayscore = flr(self.displayscore) + 1
+ end
 end
 
 function state.gameplay:draw()
@@ -904,14 +919,31 @@ function state.gameplay:draw()
  
  -- draw hud
  camera()
- local s = score.score
- if s ~= 0 then
-  s = s .. '00'
+ 
+ -- score counter
+ local s
+ if self.displayscore == 0 then
+  s = 0
+ else
+  local whole = flr(self.displayscore)
+  local decimal = self.displayscore % 1
+  if whole == 0 then whole = '' end
+  if decimal == 0 then
+   s = whole .. '00'
+  else
+   decimal = decimal .. ''
+	  s = whole .. sub(decimal, 3, 4)
+	 end
  end
+ local y = 400 * (score.score - self.displayscore) / 200
+ if y > 2 then y = 2 end
+ y = round(y)
  print('score', 2, 2, 5)
  print('score', 1, 1, 12)
- print(s, 26, 2, 5)
- print(s, 25, 1, 7)
+ print(s, 26, 2 + y, 5)
+ print(s, 25, 1 + y, 7)
+ 
+ -- high score
  local s = score.highscore
  if s ~= 0 then
   s = s .. '00'
@@ -920,6 +952,8 @@ function state.gameplay:draw()
  print('high', 1, 9, 10)
  print(s, 26, 10, 5)
  print(s, 25, 9, 7)
+ 
+ -- time left
  print('time', 114, 2, 5)
  print('time', 113, 1, 7)
  local t = flr(score.timeleft) + 1
