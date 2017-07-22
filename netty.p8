@@ -1111,9 +1111,6 @@ function state.gameplay:draw()
   e:draw()
  end
  
- -- draw hud
- if gametype == 3 then return false end
- 
  camera()
 end
 
