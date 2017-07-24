@@ -920,7 +920,7 @@ function state.gameplay:powerup()
 
  if c == 1 then
   add(dots, class.dot())
-  add(effects, class.poweruptext('extra dot!'))
+  add(effects, class.poweruptext('extra gem!'))
   sfx(19, 3)
  end
  if c == 2 then
