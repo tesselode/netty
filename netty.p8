@@ -1186,9 +1186,14 @@ function state.results:draw()
 
  rectfill(8, 32, 120, 96, 0)
  
+ local c = 12
+ if gametype == 2 then
+  c = 14
+ end
+ 
  if self.statetimer <= 2 then
 	 printc('final score', 65, 41, 5)
-	 printc('final score', 64, 40, 12)
+	 printc('final score', 64, 40, c)
 	 local s = flr(self.displayscore)
 	 if s > 0 then
 	  s = s .. '00'
@@ -1211,7 +1216,7 @@ function state.results:draw()
 	  printc('new high score!', 64, 64, 10)
 	 end
 	 printc('Ž retry    — menu', 65, 81, 5, 1)
-	 printc('Ž retry    — menu', 64, 80, 12, 1)
+	 printc('Ž retry    — menu', 64, 80, c, 1)
 	end
 end
 
@@ -1371,14 +1376,18 @@ function state.title:draw()
  -- instructions
  camera(0, 1.99 * sin(uptime / 120) + 4)
  
+ local c = 12
+ if gametype == 2 then c = 14 end
+ if gametype == 3 then c = 9 end
+ 
  printc('hold ”ƒ‹‘ to aim', 65, 81, 5, 4)
- printc('hold ”ƒ‹‘ to aim', 64, 80, 12, 4)
+ printc('hold ”ƒ‹‘ to aim', 64, 80, 6, 4)
  
  printc('hold Ž to charge', 65, 89, 5, 1)
- printc('hold Ž to charge', 64, 88, 12, 1)
+ printc('hold Ž to charge', 64, 88, 6, 1)
  
  printc('release Ž to launch!', 65, 97, 5, 1)
- printc('release Ž to launch!', 64, 96, 12, 1)
+ printc('release Ž to launch!', 64, 96, 6, 1)
  
  local s
  if gametype == 1 then
@@ -1389,7 +1398,7 @@ function state.title:draw()
   s = '— sensory      Ž start'
  end
  printc(s, 65, 113, 5, 1)
- printc(s, 64, 112, 14, 1)
+ printc(s, 64, 112, c, 1)
  
  camera()
 end
